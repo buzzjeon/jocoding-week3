@@ -1,34 +1,843 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useRef, useEffect } from 'react'
+import html2canvas from 'html2canvas'
+
+type Page = 'landing' | 'form' | 'result' | 'payment-success'
+type Language = 'en' | 'ko'
+
+const translations = {
+  en: {
+    nav: {
+      home: 'Home',
+      browse: 'Browse',
+      saved: 'Saved',
+      settings: 'Settings',
+    },
+    hero: {
+      tagline: 'The Future of Fashion',
+      title1: 'Your AI',
+      title2: 'Fashion Expert',
+      description: 'Precision body analysis and curated fashion recommendations tailored to your unique silhouette.',
+      cta: 'Start My Styling',
+    },
+    social: {
+      poweredBy: 'Powered by OpenAI GPT-4',
+    },
+    features: {
+      title: 'Tailored to You',
+      description: 'Experience the future of personal styling with our advanced AI technology designed for the modern wardrobe.',
+      bodyAnalysis: 'Body Analysis',
+      bodyAnalysisDesc: 'Our AI measures proportions with precision for the ultimate silhouette mapping.',
+      personalizedFits: 'Personalized Fits',
+      personalizedFitsDesc: 'Never guess your size again. Curated pieces that fit your body perfectly.',
+      styleDiscovery: 'Style Discovery',
+      styleDiscoveryDesc: 'Stay ahead of trends with outfits matched specifically to your aesthetic.',
+    },
+    process: {
+      title: "The Stylist's Process",
+      step1: 'Capture Silhouette',
+      step1Desc: 'Securely upload a full-body photo for our vision engine to process.',
+      step2: 'Neural Analysis',
+      step2Desc: 'Our AI analyzes your unique shape, skin tone, and existing style patterns.',
+      step3: 'Get Curated',
+      step3Desc: 'Receive a personalized digital lookbook with direct shopping links.',
+    },
+    cta: {
+      title: 'Elevate Your Look',
+      description: 'Discover your perfect style with AI-powered fashion recommendations.',
+      button: 'Get Started Free',
+      note: 'No credit card required',
+      premiumButton: 'Get Premium Analysis',
+      premiumNote: 'Detailed report with personalized recommendations',
+    },
+    footer: {
+      copyright: '© 2024 STYLEAI. ALL RIGHTS RESERVED.',
+    },
+    form: {
+      title: "Let's Style You",
+      description: 'Upload your photo and enter your details for personalized recommendations.',
+      uploadPhoto: 'Upload your photo',
+      gender: 'Gender',
+      male: 'Male',
+      female: 'Female',
+      height: 'Height (cm)',
+      weight: 'Weight (kg)',
+      submit: 'Get My Style Report',
+      analyzing: 'Analyzing...',
+      aiAnalyzing: 'AI is analyzing your style...',
+      generatingHairstyle: 'Generating hairstyle recommendations...',
+    },
+    result: {
+      title: 'Your Style Report',
+      description: 'Personalized recommendations based on your profile.',
+      hairstyles: 'Recommended Hairstyles',
+      tryAgain: 'Try Again',
+      backHome: 'Back to Home',
+      download: 'Download',
+      share: 'Share',
+      copied: 'Link copied!',
+      shareTitle: 'My Style Report from StyleAI',
+      shareText: 'Check out my personalized style recommendations!',
+    },
+    errors: {
+      fillAll: 'Please fill in gender, height, and weight.',
+      apiError: 'An error occurred: ',
+      connectionFailed: 'Failed to connect to server.',
+    },
+    paymentSuccess: {
+      title: 'Payment Successful!',
+      description: 'Thank you for your purchase. You now have access to premium style consulting.',
+      button: 'Start Premium Consulting',
+    },
+  },
+  ko: {
+    nav: {
+      home: '홈',
+      browse: '둘러보기',
+      saved: '저장됨',
+      settings: '설정',
+    },
+    hero: {
+      tagline: '패션의 미래',
+      title1: 'AI 패션',
+      title2: '전문가',
+      description: '정밀한 체형 분석과 당신만의 실루엣에 맞춘 맞춤형 패션 추천을 경험하세요.',
+      cta: '스타일링 시작하기',
+    },
+    social: {
+      poweredBy: 'OpenAI GPT-4 기반',
+    },
+    features: {
+      title: '맞춤형 스타일링',
+      description: '현대적인 옷장을 위해 설계된 고급 AI 기술로 퍼스널 스타일링의 미래를 경험하세요.',
+      bodyAnalysis: '체형 분석',
+      bodyAnalysisDesc: 'AI가 정밀하게 체형 비율을 측정하여 최적의 실루엣을 매핑합니다.',
+      personalizedFits: '맞춤 핏',
+      personalizedFitsDesc: '더 이상 사이즈를 고민하지 마세요. 완벽하게 맞는 옷을 추천해 드립니다.',
+      styleDiscovery: '스타일 발견',
+      styleDiscoveryDesc: '당신의 취향에 맞춘 트렌드 아이템으로 한 발 앞서가세요.',
+    },
+    process: {
+      title: '스타일리스트 프로세스',
+      step1: '실루엣 촬영',
+      step1Desc: '전신 사진을 안전하게 업로드하면 비전 엔진이 분석합니다.',
+      step2: '신경망 분석',
+      step2Desc: 'AI가 체형, 피부톤, 기존 스타일 패턴을 분석합니다.',
+      step3: '큐레이션 받기',
+      step3Desc: '쇼핑 링크가 포함된 맞춤형 디지털 룩북을 받아보세요.',
+    },
+    cta: {
+      title: '룩을 업그레이드하세요',
+      description: 'AI 기반 패션 추천으로 나만의 완벽한 스타일을 발견하세요.',
+      button: '무료로 시작하기',
+      note: '신용카드 불필요',
+      premiumButton: '프리미엄 분석 받기',
+      premiumNote: '상세 리포트와 맞춤형 추천 포함',
+    },
+    footer: {
+      copyright: '© 2024 STYLEAI. 모든 권리 보유.',
+    },
+    form: {
+      title: '스타일링을 시작해요',
+      description: '사진을 업로드하고 정보를 입력하면 맞춤 추천을 받을 수 있어요.',
+      uploadPhoto: '사진 업로드',
+      gender: '성별',
+      male: '남성',
+      female: '여성',
+      height: '키 (cm)',
+      weight: '몸무게 (kg)',
+      submit: '스타일 리포트 받기',
+      analyzing: '분석 중...',
+      aiAnalyzing: 'AI가 스타일을 분석하고 있습니다...',
+      generatingHairstyle: '헤어스타일 추천을 생성하고 있습니다...',
+    },
+    result: {
+      title: '스타일 리포트',
+      description: '프로필을 기반으로 한 맞춤형 추천입니다.',
+      hairstyles: '추천 헤어스타일',
+      tryAgain: '다시 분석하기',
+      backHome: '홈으로 돌아가기',
+      download: '다운로드',
+      share: '공유하기',
+      copied: '링크가 복사되었습니다!',
+      shareTitle: 'StyleAI 스타일 리포트',
+      shareText: '나만의 맞춤 스타일 추천을 확인해보세요!',
+    },
+    errors: {
+      fillAll: '성별, 키, 몸무게를 모두 입력해주세요.',
+      apiError: '오류가 발생했습니다: ',
+      connectionFailed: '서버 연결에 실패했습니다.',
+    },
+    paymentSuccess: {
+      title: '결제가 완료되었습니다!',
+      description: '구매해 주셔서 감사합니다. 이제 프리미엄 스타일 컨설팅을 이용하실 수 있습니다.',
+      button: '프리미엄 컨설팅 시작하기',
+    },
+  },
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [page, setPage] = useState<Page>('landing')
+  const [lang, setLang] = useState<Language>('ko')
+  const [photo, setPhoto] = useState<string | null>(null)
+  const [gender, setGender] = useState('')
+  const [height, setHeight] = useState('')
+  const [weight, setWeight] = useState('')
+  const [report, setReport] = useState('')
+  const [hairstyleImage, setHairstyleImage] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [showLangMenu, setShowLangMenu] = useState(false)
+  const [showCopied, setShowCopied] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const resultRef = useRef<HTMLDivElement>(null)
 
+  const t = translations[lang]
+
+  // Check for payment success on load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('payment') === 'success') {
+      setPage('payment-success')
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  const toggleLanguage = () => {
+    setLang(lang === 'en' ? 'ko' : 'en')
+    setShowLangMenu(false)
+  }
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPhoto(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!gender || !height || !weight) {
+      alert(t.errors.fillAll)
+      return
+    }
+
+    setLoading(true)
+    setReport('')
+    setHairstyleImage(null)
+
+    try {
+      const response = await fetch('/api/consult', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photo, gender, height, weight }),
+      })
+
+      const data = await response.json()
+
+      if (data.error) {
+        alert(t.errors.apiError + data.error)
+      } else {
+        setReport(data.report)
+        if (data.hairstyleImage) {
+          setHairstyleImage(data.hairstyleImage)
+        }
+        setPage('result')
+      }
+    } catch {
+      alert(t.errors.connectionFailed)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleReset = () => {
+    setReport('')
+    setHairstyleImage(null)
+    setPage('form')
+  }
+
+  const handleCheckout = async () => {
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ origin: window.location.origin }),
+      })
+
+      const data = await response.json()
+
+      if (data.error) {
+        alert(lang === 'ko' ? '결제 오류: ' + data.error : 'Checkout error: ' + data.error)
+        return
+      }
+
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch {
+      alert(lang === 'ko' ? '결제 서버 연결에 실패했습니다.' : 'Failed to connect to checkout server.')
+    }
+  }
+
+  const handleDownload = async () => {
+    if (!resultRef.current) return
+
+    try {
+      const canvas = await html2canvas(resultRef.current, {
+        backgroundColor: '#0a0a0a',
+        scale: 2,
+      })
+
+      const link = document.createElement('a')
+      link.download = `style-report-${Date.now()}.png`
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    } catch (error) {
+      console.error('Download failed:', error)
+    }
+  }
+
+  const handleShare = async () => {
+    const shareData = {
+      title: t.result.shareTitle,
+      text: t.result.shareText,
+      url: window.location.href,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (error) {
+        // User cancelled or share failed, fallback to copy
+        copyToClipboard()
+      }
+    } else {
+      copyToClipboard()
+    }
+  }
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(window.location.href)
+    setShowCopied(true)
+    setTimeout(() => setShowCopied(false), 2000)
+  }
+
+  // Language Selector Component
+  const LanguageSelector = () => (
+    <div className="relative">
+      <button
+        onClick={() => setShowLangMenu(!showLangMenu)}
+        className="flex items-center gap-1 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm"
+      >
+        <span className="material-symbols-outlined text-[18px]">language</span>
+        <span className="hidden sm:inline">{lang === 'en' ? 'EN' : '한국어'}</span>
+      </button>
+      {showLangMenu && (
+        <div className="absolute right-0 top-12 bg-background-dark border border-white/10 rounded-lg overflow-hidden shadow-xl z-50">
+          <button
+            onClick={() => { setLang('en'); setShowLangMenu(false) }}
+            className={`w-full px-4 py-2 text-left hover:bg-white/10 ${lang === 'en' ? 'text-primary' : 'text-white'}`}
+          >
+            English
+          </button>
+          <button
+            onClick={() => { setLang('ko'); setShowLangMenu(false) }}
+            className={`w-full px-4 py-2 text-left hover:bg-white/10 ${lang === 'ko' ? 'text-primary' : 'text-white'}`}
+          >
+            한국어
+          </button>
+        </div>
+      )}
+    </div>
+  )
+
+  // Landing Page
+  if (page === 'landing') {
+    return (
+      <div className="bg-background-dark text-white font-display min-h-screen">
+        {/* Top Navigation */}
+        <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+          <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+            <div className="flex items-center gap-2 lg:hidden">
+              <span className="material-symbols-outlined text-primary text-[28px]">menu</span>
+            </div>
+            <div className="hidden lg:flex items-center gap-8">
+              <a href="#" className="text-white/60 hover:text-white transition-colors">{t.nav.home}</a>
+              <a href="#" className="text-white/60 hover:text-white transition-colors">{t.nav.browse}</a>
+              <a href="#" className="text-white/60 hover:text-white transition-colors">{t.nav.saved}</a>
+            </div>
+            <h2 className="text-white text-xl font-extrabold tracking-tight">
+              Style<span className="text-primary text-2xl">AI</span>
+            </h2>
+            <div className="flex items-center gap-2">
+              <LanguageSelector />
+              <button className="flex items-center justify-center rounded-full h-10 w-10 bg-white/5 hover:bg-white/10 transition-colors">
+                <span className="material-symbols-outlined text-white text-[24px]">account_circle</span>
+              </button>
+            </div>
+          </div>
+        </nav>
+
+        <main className="pt-16 max-w-6xl mx-auto pb-24 lg:pb-12">
+          {/* Hero Section */}
+          <section className="relative min-h-[80vh] lg:min-h-[90vh] flex flex-col lg:flex-row lg:items-center">
+            {/* Background Image - Mobile */}
+            <div className="absolute inset-0 z-0 lg:hidden">
+              <div
+                className="w-full h-full bg-cover bg-center"
+                style={{
+                  backgroundImage: `url("/hero-image.png")`
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/40 to-transparent" />
+            </div>
+
+            {/* Content */}
+            <div className="relative z-10 flex flex-col gap-4 px-6 pb-12 mt-auto lg:mt-0 lg:w-1/2 lg:pl-8 xl:pl-16 lg:py-20">
+              <span className="text-primary font-bold tracking-widest text-xs uppercase">{t.hero.tagline}</span>
+              <h1 className="text-white text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black leading-tight tracking-[-0.03em]">
+                {t.hero.title1} <br />{t.hero.title2}
+              </h1>
+              <p className="text-white/80 text-lg lg:text-xl font-light leading-relaxed max-w-[400px]">
+                {t.hero.description}
+              </p>
+              <div className="mt-4 flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => setPage('form')}
+                  className="flex items-center justify-center rounded-xl h-14 px-8 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20"
+                >
+                  {t.hero.cta}
+                </button>
+              </div>
+            </div>
+
+            {/* Image - Desktop */}
+            <div className="hidden lg:block lg:w-1/2 lg:h-[90vh] relative">
+              <div
+                className="w-full h-full bg-cover bg-center rounded-l-3xl"
+                style={{
+                  backgroundImage: `url("/hero-image.png")`
+                }}
+              />
+            </div>
+          </section>
+
+          {/* Powered By */}
+          <div className="px-6 py-6 border-y border-white/5 bg-background-dark/50 flex justify-center items-center gap-4">
+            <span className="material-symbols-outlined text-primary text-[20px]">smart_toy</span>
+            <span className="text-sm font-medium text-white/60">{t.social.poweredBy}</span>
+          </div>
+
+          {/* Features Section */}
+          <section className="px-6 py-16 lg:py-24 flex flex-col gap-12">
+            <div className="flex flex-col gap-4 max-w-2xl mx-auto text-center lg:text-left lg:mx-0">
+              <h2 className="text-white text-3xl lg:text-4xl font-bold leading-tight tracking-tight">{t.features.title}</h2>
+              <p className="text-white/60 text-base lg:text-lg font-normal leading-relaxed">
+                {t.features.description}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              <div className="flex gap-5 rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/[0.08] transition-colors">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+                  <span className="material-symbols-outlined text-[28px]">body_system</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-white text-lg font-bold">{t.features.bodyAnalysis}</h3>
+                  <p className="text-white/50 text-sm leading-normal">{t.features.bodyAnalysisDesc}</p>
+                </div>
+              </div>
+              <div className="flex gap-5 rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/[0.08] transition-colors">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+                  <span className="material-symbols-outlined text-[28px]">apparel</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-white text-lg font-bold">{t.features.personalizedFits}</h3>
+                  <p className="text-white/50 text-sm leading-normal">{t.features.personalizedFitsDesc}</p>
+                </div>
+              </div>
+              <div className="flex gap-5 rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/[0.08] transition-colors md:col-span-2 lg:col-span-1">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+                  <span className="material-symbols-outlined text-[28px]">auto_awesome</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-white text-lg font-bold">{t.features.styleDiscovery}</h3>
+                  <p className="text-white/50 text-sm leading-normal">{t.features.styleDiscoveryDesc}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Timeline Section */}
+          <section className="bg-white/[0.02] py-16 lg:py-24 border-y border-white/5">
+            <h2 className="text-white text-3xl lg:text-4xl font-bold tracking-tight px-6 pb-12 text-center">{t.process.title}</h2>
+            <div className="grid grid-cols-[60px_1fr] lg:grid-cols-3 gap-x-2 lg:gap-8 px-8 max-w-4xl mx-auto">
+              {/* Step 1 */}
+              <div className="flex flex-col items-center gap-1 lg:items-center">
+                <div className="flex h-10 w-10 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-primary text-background-dark">
+                  <span className="material-symbols-outlined text-[20px] lg:text-[28px] font-bold">photo_camera</span>
+                </div>
+                <div className="w-[2px] bg-primary/30 h-16 grow lg:hidden" />
+              </div>
+              <div className="flex flex-1 flex-col pt-1 pb-10 lg:text-center lg:pb-0">
+                <p className="text-white text-lg font-bold leading-none mb-2">{t.process.step1}</p>
+                <p className="text-white/50 text-sm leading-relaxed">{t.process.step1Desc}</p>
+              </div>
+              {/* Step 2 */}
+              <div className="flex flex-col items-center gap-1 lg:items-center">
+                <div className="flex h-10 w-10 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-primary text-background-dark">
+                  <span className="material-symbols-outlined text-[20px] lg:text-[28px] font-bold">memory</span>
+                </div>
+                <div className="w-[2px] bg-primary/30 h-16 grow lg:hidden" />
+              </div>
+              <div className="flex flex-1 flex-col pt-1 pb-10 lg:text-center lg:pb-0">
+                <p className="text-white text-lg font-bold leading-none mb-2">{t.process.step2}</p>
+                <p className="text-white/50 text-sm leading-relaxed">{t.process.step2Desc}</p>
+              </div>
+              {/* Step 3 */}
+              <div className="flex flex-col items-center gap-1 lg:items-center">
+                <div className="flex h-10 w-10 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-primary text-background-dark">
+                  <span className="material-symbols-outlined text-[20px] lg:text-[28px] font-bold">check_circle</span>
+                </div>
+              </div>
+              <div className="flex flex-1 flex-col pt-1 lg:text-center">
+                <p className="text-white text-lg font-bold leading-none mb-2">{t.process.step3}</p>
+                <p className="text-white/50 text-sm leading-relaxed">{t.process.step3Desc}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* CTA Section */}
+          <section className="px-6 py-20 lg:py-32 text-center flex flex-col gap-8 max-w-2xl mx-auto">
+            <div className="space-y-4">
+              <h2 className="text-white text-3xl lg:text-5xl font-black">{t.cta.title}</h2>
+              <p className="text-white/60 lg:text-lg">{t.cta.description}</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+              <div className="flex flex-col gap-2 items-center">
+                <button
+                  onClick={() => setPage('form')}
+                  className="w-full sm:w-auto flex items-center justify-center rounded-xl h-14 px-12 bg-white/10 border border-white/20 text-white text-lg font-bold tracking-tight hover:bg-white/20 transition-all"
+                >
+                  {t.cta.button}
+                </button>
+                <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">{t.cta.note}</p>
+              </div>
+              <div className="flex flex-col gap-2 items-center">
+                <button
+                  onClick={handleCheckout}
+                  className="w-full sm:w-auto flex items-center justify-center rounded-xl h-14 px-12 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 transition-all shadow-lg shadow-primary/20"
+                >
+                  <span className="material-symbols-outlined mr-2">workspace_premium</span>
+                  {t.cta.premiumButton}
+                </button>
+                <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">{t.cta.premiumNote}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Footer */}
+          <footer className="p-10 border-t border-white/5 text-center">
+            <div className="flex justify-center gap-6 mb-8 text-white/40">
+              <span className="material-symbols-outlined hover:text-primary cursor-pointer transition-colors">share</span>
+              <span className="material-symbols-outlined hover:text-primary cursor-pointer transition-colors">language</span>
+              <span className="material-symbols-outlined hover:text-primary cursor-pointer transition-colors">mail</span>
+            </div>
+            <p className="text-white/20 text-xs tracking-wider">{t.footer.copyright}</p>
+          </footer>
+        </main>
+
+        {/* Bottom Tab Bar - Mobile Only */}
+        <div className="fixed bottom-0 w-full glass border-t border-white/10 pb-8 pt-3 px-6 z-50 lg:hidden">
+          <div className="flex justify-between items-center max-w-lg mx-auto">
+            <div className="flex flex-col items-center text-primary">
+              <span className="material-symbols-outlined">home</span>
+              <span className="text-[10px] font-bold mt-1 uppercase">{t.nav.home}</span>
+            </div>
+            <div className="flex flex-col items-center text-white/40">
+              <span className="material-symbols-outlined">search</span>
+              <span className="text-[10px] font-bold mt-1 uppercase">{t.nav.browse}</span>
+            </div>
+            <div className="flex flex-col items-center text-white/40">
+              <span className="material-symbols-outlined">bookmark</span>
+              <span className="text-[10px] font-bold mt-1 uppercase">{t.nav.saved}</span>
+            </div>
+            <div className="flex flex-col items-center text-white/40" onClick={toggleLanguage}>
+              <span className="material-symbols-outlined">language</span>
+              <span className="text-[10px] font-bold mt-1 uppercase">{lang === 'en' ? 'EN' : '한국어'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Form Page
+  if (page === 'form') {
+    return (
+      <div className="bg-background-dark text-white font-display min-h-screen">
+        {/* Top Navigation */}
+        <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+          <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            </button>
+            <h2 className="text-white text-xl font-extrabold tracking-tight">
+              Style<span className="text-primary text-2xl">AI</span>
+            </h2>
+            <LanguageSelector />
+          </div>
+        </nav>
+
+        <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto">
+          <div className="mb-8 text-center lg:text-left">
+            <h1 className="text-white text-3xl lg:text-4xl font-bold mb-2">{t.form.title}</h1>
+            <p className="text-white/60 lg:text-lg">{t.form.description}</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-8">
+            {/* Photo Upload */}
+            <div className="lg:w-1/2">
+              <div
+                className="relative w-full h-64 lg:h-80 border-2 border-dashed border-primary/50 rounded-2xl cursor-pointer overflow-hidden hover:border-primary transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {photo ? (
+                  <img src={photo} alt="Uploaded" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full gap-3 text-white/50">
+                    <span className="material-symbols-outlined text-[48px] lg:text-[64px] text-primary">add_a_photo</span>
+                    <span className="text-sm lg:text-base">{t.form.uploadPhoto}</span>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handlePhotoChange}
+                  accept="image/*"
+                  hidden
+                />
+              </div>
+            </div>
+
+            {/* Form Fields */}
+            <div className="lg:w-1/2 flex flex-col gap-6">
+              {/* Gender Selection */}
+              <div className="flex flex-col gap-2">
+                <label className="text-white/80 text-sm font-medium">{t.form.gender}</label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setGender('male')}
+                    className={`flex-1 py-3 rounded-xl font-medium transition-all ${
+                      gender === 'male'
+                        ? 'bg-primary text-background-dark'
+                        : 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10'
+                    }`}
+                  >
+                    {t.form.male}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGender('female')}
+                    className={`flex-1 py-3 rounded-xl font-medium transition-all ${
+                      gender === 'female'
+                        ? 'bg-primary text-background-dark'
+                        : 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10'
+                    }`}
+                  >
+                    {t.form.female}
+                  </button>
+                </div>
+              </div>
+
+              {/* Height */}
+              <div className="flex flex-col gap-2">
+                <label className="text-white/80 text-sm font-medium">{t.form.height}</label>
+                <input
+                  type="number"
+                  value={height}
+                  onChange={(e) => setHeight(e.target.value)}
+                  placeholder="170"
+                  className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+
+              {/* Weight */}
+              <div className="flex flex-col gap-2">
+                <label className="text-white/80 text-sm font-medium">{t.form.weight}</label>
+                <input
+                  type="number"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  placeholder="65"
+                  className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center rounded-xl h-14 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-background-dark/30 border-t-background-dark rounded-full animate-spin" />
+                    {t.form.analyzing}
+                  </div>
+                ) : (
+                  t.form.submit
+                )}
+              </button>
+
+              {loading && (
+                <div className="text-center">
+                  <p className="text-white/60 text-sm">{t.form.aiAnalyzing}</p>
+                  {photo && <p className="text-white/40 text-xs mt-2">{t.form.generatingHairstyle}</p>}
+                </div>
+              )}
+            </div>
+          </form>
+        </main>
+      </div>
+    )
+  }
+
+  // Payment Success Page
+  if (page === 'payment-success') {
+    return (
+      <div className="bg-background-dark text-white font-display min-h-screen">
+        {/* Top Navigation */}
+        <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+          <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            </button>
+            <h2 className="text-white text-xl font-extrabold tracking-tight">
+              Style<span className="text-primary text-2xl">AI</span>
+            </h2>
+            <LanguageSelector />
+          </div>
+        </nav>
+
+        <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[80vh]">
+          <div className="text-center">
+            {/* Success Icon */}
+            <div className="w-24 h-24 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-8">
+              <span className="material-symbols-outlined text-green-500 text-[48px]">check_circle</span>
+            </div>
+
+            <h1 className="text-white text-3xl lg:text-4xl font-bold mb-4">{t.paymentSuccess.title}</h1>
+            <p className="text-white/60 lg:text-lg mb-8 max-w-md">{t.paymentSuccess.description}</p>
+
+            <button
+              onClick={() => setPage('form')}
+              className="flex items-center justify-center rounded-xl h-14 px-12 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 mx-auto"
+            >
+              <span className="material-symbols-outlined mr-2">auto_awesome</span>
+              {t.paymentSuccess.button}
+            </button>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Result Page
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="bg-background-dark text-white font-display min-h-screen">
+      {/* Top Navigation */}
+      <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+        <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+          <button onClick={handleReset} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+          </button>
+          <h2 className="text-white text-xl font-extrabold tracking-tight">
+            Style<span className="text-primary text-2xl">AI</span>
+          </h2>
+          <LanguageSelector />
+        </div>
+      </nav>
+
+      <main className="pt-24 pb-12 px-6 max-w-4xl mx-auto">
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="text-center lg:text-left">
+            <h1 className="text-white text-3xl lg:text-4xl font-bold mb-2">{t.result.title}</h1>
+            <p className="text-white/60 lg:text-lg">{t.result.description}</p>
+          </div>
+          <div className="flex gap-2 justify-center sm:justify-end">
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white text-sm font-medium"
+            >
+              <span className="material-symbols-outlined text-[20px]">download</span>
+              {t.result.download}
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white text-sm font-medium relative"
+            >
+              <span className="material-symbols-outlined text-[20px]">share</span>
+              {t.result.share}
+              {showCopied && (
+                <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-3 py-1 rounded-lg whitespace-nowrap">
+                  {t.result.copied}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div ref={resultRef} className="grid lg:grid-cols-2 gap-8 bg-background-dark p-4 rounded-2xl">
+          {/* Report Content */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <div className="prose prose-invert max-w-none">
+              {report.split('\n').map((line, index) => (
+                <p key={index} className="text-white/80 text-sm leading-relaxed my-2">
+                  {line}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          {/* Hairstyle Image */}
+          {hairstyleImage && (
+            <div>
+              <h2 className="text-white text-xl font-bold mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">face</span>
+                {t.result.hairstyles}
+              </h2>
+              <img
+                src={hairstyleImage}
+                alt="Recommended hairstyles"
+                className="w-full rounded-2xl shadow-lg"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 mt-8 max-w-md mx-auto lg:mx-0">
+          <button
+            onClick={handleReset}
+            className="flex-1 flex items-center justify-center rounded-xl h-14 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 transition-all"
+          >
+            {t.result.tryAgain}
+          </button>
+          <button
+            onClick={() => setPage('landing')}
+            className="flex-1 flex items-center justify-center rounded-xl h-14 bg-white/5 border border-white/10 text-white text-lg font-medium tracking-tight hover:bg-white/10 transition-all"
+          >
+            {t.result.backHome}
+          </button>
+        </div>
+      </main>
+    </div>
   )
 }
 
