@@ -581,7 +581,12 @@ function App() {
   // Landing Page
   if (page === 'landing') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-display min-h-screen relative overflow-hidden">
+        {/* Subtle Gradient Background */}
+        <div className="fixed inset-0 z-0">
+          <div className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full bg-primary/10 blur-[150px]" />
+          <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-purple-500/10 blur-[120px]" />
+        </div>
         {/* Top Navigation */}
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
@@ -605,7 +610,7 @@ function App() {
           </div>
         </nav>
 
-        <main className="pt-16 max-w-6xl mx-auto pb-24 lg:pb-12">
+        <main className="relative z-10 pt-16 max-w-6xl mx-auto pb-24 lg:pb-12">
           {/* Hero Section */}
           <section className="relative min-h-[80vh] lg:min-h-[90vh] flex flex-col lg:flex-row lg:items-center">
             {/* Background Image - Mobile */}
