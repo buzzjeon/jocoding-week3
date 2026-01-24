@@ -65,7 +65,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (!response.ok) {
       return new Response(JSON.stringify({
         error: 'OpenAI API 오류',
-        details: data.error?.message || JSON.stringify(data)
+        details: data.error?.message || JSON.stringify(data),
+        status: response.status,
+        hasKey: !!env.OPENAI_API_KEY,
+        keyPrefix: env.OPENAI_API_KEY ? env.OPENAI_API_KEY.substring(0, 10) + '...' : 'none'
       }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
