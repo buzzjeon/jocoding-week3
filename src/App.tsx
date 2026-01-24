@@ -612,20 +612,9 @@ function App() {
 
         <main className="relative z-10 pt-16 max-w-6xl mx-auto pb-24 lg:pb-12">
           {/* Hero Section */}
-          <section className="relative min-h-[80vh] lg:min-h-[90vh] flex flex-col lg:flex-row lg:items-center">
-            {/* Background Image - Mobile */}
-            <div className="absolute inset-0 z-0 lg:hidden">
-              <div
-                className="w-full h-full bg-cover bg-center"
-                style={{
-                  backgroundImage: `url("/hero-image.png")`
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/40 to-transparent" />
-            </div>
-
+          <section className="relative min-h-[80vh] lg:min-h-[90vh] flex flex-col lg:flex-row lg:items-center px-6">
             {/* Content */}
-            <div className="relative z-10 flex flex-col gap-4 px-6 pb-12 mt-auto lg:mt-0 lg:w-1/2 lg:pl-8 xl:pl-16 lg:py-20">
+            <div className="relative z-10 flex flex-col gap-4 lg:w-1/2 lg:pr-8 py-12 lg:py-20">
               <span className="text-primary font-bold tracking-widest text-xs uppercase">{t.hero.tagline}</span>
               <h1 className="text-white text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black leading-tight tracking-[-0.03em]">
                 {t.hero.title1} <br />{t.hero.title2}
@@ -643,13 +632,12 @@ function App() {
               </div>
             </div>
 
-            {/* Image - Desktop */}
-            <div className="hidden lg:block lg:w-1/2 lg:h-[90vh] relative">
-              <div
-                className="w-full h-full bg-cover bg-center rounded-l-3xl"
-                style={{
-                  backgroundImage: `url("/hero-image.png")`
-                }}
+            {/* Hero Image */}
+            <div className="lg:w-1/2 flex justify-center items-center py-8 lg:py-0">
+              <img
+                src="/hero-image.png"
+                alt="AI Personal Stylist"
+                className="w-full max-w-[500px] lg:max-w-none lg:w-full h-auto rounded-2xl shadow-2xl shadow-primary/10"
               />
             </div>
           </section>
