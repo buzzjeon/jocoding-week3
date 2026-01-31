@@ -767,18 +767,39 @@ function App() {
     setLoading(true)
     setMypageError('')
 
-    // Sign out and delete user data
-    const { error } = await supabase.rpc('delete_user')
+    try {
+      // Get current session token
+      const { data: { session } } = await supabase.auth.getSession()
 
-    if (error) {
-      // If RPC doesn't exist, just sign out
+      if (!session?.access_token) {
+        setMypageError('Session expired. Please login again.')
+        setLoading(false)
+        return
+      }
+
+      // Call delete account API
+      const response = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMypageError(data.error || 'Failed to delete account')
+        setLoading(false)
+        return
+      }
+
+      // Sign out after successful deletion
       await supabase.auth.signOut()
       alert(t.mypage.accountDeleted)
       setPage('landing')
-    } else {
-      await supabase.auth.signOut()
-      alert(t.mypage.accountDeleted)
-      setPage('landing')
+    } catch (err) {
+      setMypageError('An error occurred while deleting account')
     }
     setLoading(false)
   }
