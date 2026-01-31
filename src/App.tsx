@@ -585,7 +585,7 @@ function App() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://9000-firebase-week-3-1769234641546.cluster-va5f6x3wzzh4stde63ddr3qgge.cloudworkstations.dev',
+        redirectTo: window.location.origin,
       },
     })
     if (error) {
