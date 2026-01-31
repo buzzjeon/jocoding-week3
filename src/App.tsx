@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas'
 import { supabase } from './lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
-type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup' | 'mypage' | 'forgot-password' | 'reset-password'
+type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup' | 'mypage' | 'forgot-password' | 'reset-password' | 'subscription' | 'subscription-success'
 type Language = 'en' | 'ko'
 
 const translations = {
@@ -256,6 +256,38 @@ For refund-related questions, please contact refunds@styleai.com.
       errorCurrentPassword: 'Current password is required',
       errorDeleteConfirm: 'Please type DELETE to confirm',
     },
+    subscription: {
+      title: 'StyleAI Daily Premium',
+      subtitle: 'Your Personal AI Stylist, Every Morning',
+      description: 'Wake up to personalized fashion recommendations tailored just for you!',
+      features: {
+        daily: 'Daily Style Recommendations',
+        dailyDesc: 'Personalized outfit suggestions based on your body type and today\'s weather',
+        weather: 'Weather-Smart Fashion',
+        weatherDesc: 'Real-time weather integration for your location',
+        personalized: 'Personalized to You',
+        personalizedDesc: 'Recommendations based on your unique profile',
+      },
+      pricing: {
+        price: '$9.99',
+        period: '/month',
+        trial: '7-day free trial',
+        trialDesc: 'Try free for 7 days, cancel anytime',
+        perDay: 'Less than $0.33/day',
+      },
+      cta: 'Start Free Trial',
+      ctaLoggedOut: 'Login to Subscribe',
+      benefits: {
+        cancel: 'Cancel anytime',
+        noCharge: 'No charge during trial',
+        refund: '100% satisfaction guarantee',
+      },
+      success: {
+        title: 'Welcome to Premium!',
+        description: 'Your 7-day free trial has started. Enjoy personalized style recommendations every morning!',
+        button: 'Set Up My Profile',
+      },
+    },
   },
   ko: {
     nav: {
@@ -506,6 +538,38 @@ StyleAI는 구매 즉시 제공되는 디지털 서비스입니다. AI가 생성
       errorCurrentPassword: '현재 비밀번호를 입력해주세요',
       errorDeleteConfirm: '확인을 위해 삭제를 입력해주세요',
     },
+    subscription: {
+      title: 'StyleAI Daily 프리미엄',
+      subtitle: '매일 아침, 당신만을 위한 AI 스타일리스트',
+      description: '당신만을 위한 맞춤형 패션 추천으로 매일 아침을 시작하세요!',
+      features: {
+        daily: '매일 스타일 추천',
+        dailyDesc: '체형과 오늘 날씨를 고려한 맞춤형 코디 제안',
+        weather: '날씨 기반 패션',
+        weatherDesc: '실시간 날씨 정보를 반영한 스타일링',
+        personalized: '나만의 맞춤형',
+        personalizedDesc: '당신의 프로필 기반 개인화 추천',
+      },
+      pricing: {
+        price: '₩9,900',
+        period: '/월',
+        trial: '7일 무료 체험',
+        trialDesc: '7일간 무료로 체험하고, 언제든 취소 가능',
+        perDay: '하루 ₩330 미만',
+      },
+      cta: '무료 체험 시작하기',
+      ctaLoggedOut: '로그인하고 구독하기',
+      benefits: {
+        cancel: '언제든 취소 가능',
+        noCharge: '체험 기간 중 결제 없음',
+        refund: '100% 만족 보장',
+      },
+      success: {
+        title: '프리미엄에 오신 것을 환영합니다!',
+        description: '7일 무료 체험이 시작되었습니다. 매일 아침 맞춤형 스타일 추천을 받아보세요!',
+        button: '프로필 설정하기',
+      },
+    },
   },
 }
 
@@ -562,12 +626,15 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Check for payment success on load
+  // Check for payment/subscription success on load
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('payment') === 'success') {
       setPage('payment-success')
-      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+    if (params.get('subscription') === 'success') {
+      setPage('subscription-success')
       window.history.replaceState({}, '', window.location.pathname)
     }
   }, [])
@@ -804,6 +871,42 @@ function App() {
     setLoading(false)
   }
 
+  // Subscription handler
+  const handleSubscribe = async () => {
+    if (!user) {
+      setPage('login')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin: window.location.origin,
+          userId: user.id,
+          email: user.email,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.error) {
+        alert(lang === 'ko' ? '구독 오류: ' + data.error : 'Subscription error: ' + data.error)
+        return
+      }
+
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch {
+      alert(lang === 'ko' ? '서버 연결에 실패했습니다.' : 'Failed to connect to server.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const goToMypage = () => {
     setShowUserMenu(false)
     setMypageError('')
@@ -866,29 +969,6 @@ function App() {
     setReport('')
     setHairstyleImage(null)
     setPage('form')
-  }
-
-  const handleCheckout = async () => {
-    try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ origin: window.location.origin }),
-      })
-
-      const data = await response.json()
-
-      if (data.error) {
-        alert(lang === 'ko' ? '결제 오류: ' + data.error : 'Checkout error: ' + data.error)
-        return
-      }
-
-      if (data.url) {
-        window.location.href = data.url
-      }
-    } catch {
-      alert(lang === 'ko' ? '결제 서버 연결에 실패했습니다.' : 'Failed to connect to checkout server.')
-    }
   }
 
   const handleDownload = async () => {
@@ -1170,13 +1250,13 @@ function App() {
               </div>
               <div className="flex flex-col gap-2 items-center">
                 <button
-                  onClick={handleCheckout}
+                  onClick={() => setPage('subscription')}
                   className="w-full sm:w-auto flex items-center justify-center rounded-xl h-14 px-12 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 transition-all shadow-lg shadow-primary/20"
                 >
                   <span className="material-symbols-outlined mr-2">workspace_premium</span>
                   {t.cta.premiumButton}
                 </button>
-                <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">{t.cta.premiumNote}</p>
+                <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">{t.subscription.pricing.trial}</p>
               </div>
             </div>
           </section>
@@ -1810,6 +1890,164 @@ function App() {
                 )}
               </button>
             </form>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Subscription Page
+  if (page === 'subscription') {
+    return (
+      <div className="bg-background-dark text-white font-display min-h-screen">
+        <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+          <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            </button>
+            <h2 className="text-white text-xl font-extrabold tracking-tight">
+              Style<span className="text-primary text-2xl">AI</span>
+            </h2>
+            <LanguageSelector />
+          </div>
+        </nav>
+
+        <main className="pt-24 pb-12 px-6 max-w-4xl mx-auto">
+          {/* Hero */}
+          <div className="text-center mb-12">
+            <span className="inline-block px-4 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium mb-4">
+              {t.subscription.pricing.trial}
+            </span>
+            <h1 className="text-white text-3xl lg:text-5xl font-black mb-4">{t.subscription.title}</h1>
+            <p className="text-white/60 text-lg lg:text-xl max-w-2xl mx-auto">{t.subscription.subtitle}</p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Features */}
+            <div className="space-y-6">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-primary">calendar_today</span>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-lg">{t.subscription.features.daily}</h3>
+                    <p className="text-white/60 text-sm mt-1">{t.subscription.features.dailyDesc}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-primary">cloud</span>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-lg">{t.subscription.features.weather}</h3>
+                    <p className="text-white/60 text-sm mt-1">{t.subscription.features.weatherDesc}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-primary">person</span>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-lg">{t.subscription.features.personalized}</h3>
+                    <p className="text-white/60 text-sm mt-1">{t.subscription.features.personalizedDesc}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing Card */}
+            <div className="bg-gradient-to-br from-primary/20 to-purple-500/20 border border-primary/30 rounded-2xl p-8">
+              <div className="text-center mb-6">
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-white text-5xl font-black">{t.subscription.pricing.price}</span>
+                  <span className="text-white/60 text-lg">{t.subscription.pricing.period}</span>
+                </div>
+                <p className="text-primary font-medium mt-2">{t.subscription.pricing.perDay}</p>
+              </div>
+
+              <div className="bg-white/10 rounded-xl p-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-green-400">verified</span>
+                  <div>
+                    <p className="text-white font-medium">{t.subscription.pricing.trial}</p>
+                    <p className="text-white/60 text-sm">{t.subscription.pricing.trialDesc}</p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={user ? handleSubscribe : () => setPage('login')}
+                disabled={loading}
+                className="w-full flex items-center justify-center rounded-xl h-14 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed mb-6"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-background-dark/30 border-t-background-dark rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined mr-2">rocket_launch</span>
+                    {user ? t.subscription.cta : t.subscription.ctaLoggedOut}
+                  </>
+                )}
+              </button>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-white/60 text-sm">
+                  <span className="material-symbols-outlined text-green-400 text-[18px]">check_circle</span>
+                  {t.subscription.benefits.cancel}
+                </div>
+                <div className="flex items-center gap-2 text-white/60 text-sm">
+                  <span className="material-symbols-outlined text-green-400 text-[18px]">check_circle</span>
+                  {t.subscription.benefits.noCharge}
+                </div>
+                <div className="flex items-center gap-2 text-white/60 text-sm">
+                  <span className="material-symbols-outlined text-green-400 text-[18px]">check_circle</span>
+                  {t.subscription.benefits.refund}
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Subscription Success Page
+  if (page === 'subscription-success') {
+    return (
+      <div className="bg-background-dark text-white font-display min-h-screen">
+        <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+          <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+            <div className="w-10" />
+            <h2 className="text-white text-xl font-extrabold tracking-tight">
+              Style<span className="text-primary text-2xl">AI</span>
+            </h2>
+            <LanguageSelector />
+          </div>
+        </nav>
+
+        <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[80vh]">
+          <div className="text-center">
+            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-8">
+              <span className="material-symbols-outlined text-primary text-[48px]">celebration</span>
+            </div>
+
+            <h1 className="text-white text-3xl lg:text-4xl font-bold mb-4">{t.subscription.success.title}</h1>
+            <p className="text-white/60 lg:text-lg mb-8 max-w-md">{t.subscription.success.description}</p>
+
+            <button
+              onClick={() => setPage('form')}
+              className="flex items-center justify-center rounded-xl h-14 px-12 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 mx-auto"
+            >
+              <span className="material-symbols-outlined mr-2">tune</span>
+              {t.subscription.success.button}
+            </button>
           </div>
         </main>
       </div>
