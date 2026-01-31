@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas'
 import { supabase } from './lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
-type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup'
+type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup' | 'mypage'
 type Language = 'en' | 'ko'
 
 const translations = {
@@ -226,6 +226,27 @@ For refund-related questions, please contact refunds@styleai.com.
       errorPasswordLength: 'Password must be at least 6 characters',
       errorInvalidEmail: 'Invalid email address',
     },
+    mypage: {
+      title: 'My Page',
+      accountInfo: 'Account Information',
+      email: 'Email',
+      createdAt: 'Member Since',
+      provider: 'Login Method',
+      changePassword: 'Change Password',
+      currentPassword: 'Current Password',
+      newPassword: 'New Password',
+      confirmNewPassword: 'Confirm New Password',
+      updatePassword: 'Update Password',
+      passwordUpdated: 'Password updated successfully!',
+      deleteAccount: 'Delete Account',
+      deleteWarning: 'This action cannot be undone. All your data will be permanently deleted.',
+      deleteConfirm: 'Are you sure you want to delete your account?',
+      typeToConfirm: 'Type "DELETE" to confirm',
+      delete: 'Delete My Account',
+      accountDeleted: 'Account deleted successfully.',
+      errorCurrentPassword: 'Current password is required',
+      errorDeleteConfirm: 'Please type DELETE to confirm',
+    },
   },
   ko: {
     nav: {
@@ -446,6 +467,27 @@ StyleAI는 구매 즉시 제공되는 디지털 서비스입니다. AI가 생성
       errorPasswordLength: '비밀번호는 최소 6자 이상이어야 합니다',
       errorInvalidEmail: '유효하지 않은 이메일 주소입니다',
     },
+    mypage: {
+      title: '마이페이지',
+      accountInfo: '계정 정보',
+      email: '이메일',
+      createdAt: '가입일',
+      provider: '로그인 방식',
+      changePassword: '비밀번호 변경',
+      currentPassword: '현재 비밀번호',
+      newPassword: '새 비밀번호',
+      confirmNewPassword: '새 비밀번호 확인',
+      updatePassword: '비밀번호 변경',
+      passwordUpdated: '비밀번호가 변경되었습니다!',
+      deleteAccount: '회원 탈퇴',
+      deleteWarning: '이 작업은 취소할 수 없습니다. 모든 데이터가 영구적으로 삭제됩니다.',
+      deleteConfirm: '정말로 계정을 삭제하시겠습니까?',
+      typeToConfirm: '확인을 위해 "삭제"를 입력하세요',
+      delete: '계정 삭제',
+      accountDeleted: '계정이 삭제되었습니다.',
+      errorCurrentPassword: '현재 비밀번호를 입력해주세요',
+      errorDeleteConfirm: '확인을 위해 삭제를 입력해주세요',
+    },
   },
 }
 
@@ -472,6 +514,13 @@ function App() {
   const [authConfirmPassword, setAuthConfirmPassword] = useState('')
   const [authError, setAuthError] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
+
+  // Mypage states
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [mypageError, setMypageError] = useState('')
+  const [mypageSuccess, setMypageSuccess] = useState('')
 
   const t = translations[lang]
 
@@ -591,6 +640,76 @@ function App() {
     if (error) {
       setAuthError(error.message)
     }
+  }
+
+  // Mypage handlers
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setMypageError('')
+    setMypageSuccess('')
+
+    if (!newPassword) {
+      setMypageError(t.auth.errorPasswordRequired)
+      return
+    }
+    if (newPassword.length < 6) {
+      setMypageError(t.auth.errorPasswordLength)
+      return
+    }
+    if (newPassword !== confirmNewPassword) {
+      setMypageError(t.auth.errorPasswordMismatch)
+      return
+    }
+
+    setLoading(true)
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    })
+
+    if (error) {
+      setMypageError(error.message)
+    } else {
+      setMypageSuccess(t.mypage.passwordUpdated)
+      setNewPassword('')
+      setConfirmNewPassword('')
+    }
+    setLoading(false)
+  }
+
+  const handleDeleteAccount = async () => {
+    const confirmText = lang === 'ko' ? '삭제' : 'DELETE'
+    if (deleteConfirmText !== confirmText) {
+      setMypageError(t.mypage.errorDeleteConfirm)
+      return
+    }
+
+    setLoading(true)
+    setMypageError('')
+
+    // Sign out and delete user data
+    const { error } = await supabase.rpc('delete_user')
+
+    if (error) {
+      // If RPC doesn't exist, just sign out
+      await supabase.auth.signOut()
+      alert(t.mypage.accountDeleted)
+      setPage('landing')
+    } else {
+      await supabase.auth.signOut()
+      alert(t.mypage.accountDeleted)
+      setPage('landing')
+    }
+    setLoading(false)
+  }
+
+  const goToMypage = () => {
+    setShowUserMenu(false)
+    setMypageError('')
+    setMypageSuccess('')
+    setNewPassword('')
+    setConfirmNewPassword('')
+    setDeleteConfirmText('')
+    setPage('mypage')
   }
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -785,6 +904,13 @@ function App() {
                         <p className="text-white/60 text-xs">{t.auth.email}</p>
                         <p className="text-white text-sm truncate">{user.email}</p>
                       </div>
+                      <button
+                        onClick={goToMypage}
+                        className="w-full px-4 py-3 text-left text-white hover:bg-white/10 flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">person</span>
+                        {t.mypage.title}
+                      </button>
                       <button
                         onClick={handleLogout}
                         className="w-full px-4 py-3 text-left text-red-400 hover:bg-white/10 flex items-center gap-2"
@@ -1433,6 +1559,182 @@ function App() {
                 {t.auth.login}
               </button>
             </p>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // My Page
+  if (page === 'mypage') {
+    const getProvider = () => {
+      if (!user) return '-'
+      const provider = user.app_metadata?.provider
+      if (provider === 'google') return 'Google'
+      if (provider === 'email') return 'Email'
+      return provider || 'Email'
+    }
+
+    const formatDate = (dateString: string | undefined) => {
+      if (!dateString) return '-'
+      const date = new Date(dateString)
+      return date.toLocaleDateString(lang === 'ko' ? 'ko-KR' : 'en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    }
+
+    const isOAuthUser = user?.app_metadata?.provider === 'google'
+
+    return (
+      <div className="bg-background-dark text-white font-display min-h-screen">
+        <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+          <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            </button>
+            <h2 className="text-white text-xl font-extrabold tracking-tight">
+              Style<span className="text-primary text-2xl">AI</span>
+            </h2>
+            <LanguageSelector />
+          </div>
+        </nav>
+
+        <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto">
+          <div className="mb-8 text-center">
+            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+              <span className="material-symbols-outlined text-primary text-[40px]">person</span>
+            </div>
+            <h1 className="text-white text-2xl lg:text-3xl font-bold">{t.mypage.title}</h1>
+          </div>
+
+          {/* Account Info */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
+            <h2 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">account_circle</span>
+              {t.mypage.accountInfo}
+            </h2>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-2 border-b border-white/10">
+                <span className="text-white/60">{t.mypage.email}</span>
+                <span className="text-white">{user?.email}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-white/10">
+                <span className="text-white/60">{t.mypage.provider}</span>
+                <span className="text-white flex items-center gap-2">
+                  {getProvider() === 'Google' && (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                  )}
+                  {getProvider()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-white/60">{t.mypage.createdAt}</span>
+                <span className="text-white">{formatDate(user?.created_at)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Change Password - Only for email users */}
+          {!isOAuthUser && (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
+              <h2 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">lock</span>
+                {t.mypage.changePassword}
+              </h2>
+
+              <form onSubmit={handleChangePassword} className="space-y-4">
+                {mypageError && (
+                  <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 text-red-400 text-sm">
+                    {mypageError}
+                  </div>
+                )}
+                {mypageSuccess && (
+                  <div className="bg-green-500/20 border border-green-500/50 rounded-xl p-4 text-green-400 text-sm">
+                    {mypageSuccess}
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-white/80 text-sm font-medium">{t.mypage.newPassword}</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-white/80 text-sm font-medium">{t.mypage.confirmNewPassword}</label>
+                  <input
+                    type="password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex items-center justify-center rounded-xl h-12 bg-primary text-background-dark font-bold hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-background-dark/30 border-t-background-dark rounded-full animate-spin" />
+                  ) : (
+                    t.mypage.updatePassword
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Delete Account */}
+          <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6">
+            <h2 className="text-red-400 text-lg font-bold mb-2 flex items-center gap-2">
+              <span className="material-symbols-outlined">warning</span>
+              {t.mypage.deleteAccount}
+            </h2>
+            <p className="text-white/60 text-sm mb-4">{t.mypage.deleteWarning}</p>
+
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-white/80 text-sm font-medium">
+                  {t.mypage.typeToConfirm} ({lang === 'ko' ? '삭제' : 'DELETE'})
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={lang === 'ko' ? '삭제' : 'DELETE'}
+                  className="w-full py-3 px-4 rounded-xl bg-white/5 border border-red-500/30 text-white placeholder-white/30 focus:outline-none focus:border-red-500 transition-colors"
+                />
+              </div>
+
+              <button
+                onClick={handleDeleteAccount}
+                disabled={loading || deleteConfirmText !== (lang === 'ko' ? '삭제' : 'DELETE')}
+                className="w-full flex items-center justify-center gap-2 rounded-xl h-12 bg-red-500/20 border border-red-500/50 text-red-400 font-bold hover:bg-red-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[20px]">delete_forever</span>
+                    {t.mypage.delete}
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </main>
       </div>
