@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas'
 import { supabase } from './lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
-type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup' | 'mypage'
+type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup' | 'mypage' | 'forgot-password' | 'reset-password'
 type Language = 'en' | 'ko'
 
 const translations = {
@@ -225,6 +225,15 @@ For refund-related questions, please contact refunds@styleai.com.
       errorPasswordMismatch: 'Passwords do not match',
       errorPasswordLength: 'Password must be at least 6 characters',
       errorInvalidEmail: 'Invalid email address',
+      forgotPasswordTitle: 'Forgot Password',
+      forgotPasswordDesc: 'Enter your email and we will send you a reset link.',
+      sendResetLink: 'Send Reset Link',
+      resetLinkSent: 'Password reset link sent! Check your email.',
+      resetPasswordTitle: 'Reset Password',
+      resetPasswordDesc: 'Enter your new password.',
+      resetPassword: 'Reset Password',
+      passwordResetSuccess: 'Password reset successfully! You can now login.',
+      backToLogin: 'Back to Login',
     },
     mypage: {
       title: 'My Page',
@@ -466,6 +475,15 @@ StyleAI는 구매 즉시 제공되는 디지털 서비스입니다. AI가 생성
       errorPasswordMismatch: '비밀번호가 일치하지 않습니다',
       errorPasswordLength: '비밀번호는 최소 6자 이상이어야 합니다',
       errorInvalidEmail: '유효하지 않은 이메일 주소입니다',
+      forgotPasswordTitle: '비밀번호 찾기',
+      forgotPasswordDesc: '이메일을 입력하시면 재설정 링크를 보내드립니다.',
+      sendResetLink: '재설정 링크 보내기',
+      resetLinkSent: '비밀번호 재설정 링크가 전송되었습니다! 이메일을 확인해주세요.',
+      resetPasswordTitle: '비밀번호 재설정',
+      resetPasswordDesc: '새 비밀번호를 입력하세요.',
+      resetPassword: '비밀번호 재설정',
+      passwordResetSuccess: '비밀번호가 재설정되었습니다! 이제 로그인할 수 있습니다.',
+      backToLogin: '로그인으로 돌아가기',
     },
     mypage: {
       title: '마이페이지',
@@ -533,8 +551,12 @@ function App() {
     })
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+      // Handle password recovery
+      if (event === 'PASSWORD_RECOVERY') {
+        setPage('reset-password')
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -640,6 +662,65 @@ function App() {
     if (error) {
       setAuthError(error.message)
     }
+  }
+
+  // Forgot password handler
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAuthError('')
+
+    if (!authEmail) {
+      setAuthError(t.auth.errorEmailRequired)
+      return
+    }
+
+    setLoading(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(authEmail, {
+      redirectTo: `${window.location.origin}`,
+    })
+
+    if (error) {
+      setAuthError(error.message)
+    } else {
+      alert(t.auth.resetLinkSent)
+      setAuthEmail('')
+      setPage('login')
+    }
+    setLoading(false)
+  }
+
+  // Reset password handler
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAuthError('')
+
+    if (!authPassword) {
+      setAuthError(t.auth.errorPasswordRequired)
+      return
+    }
+    if (authPassword.length < 6) {
+      setAuthError(t.auth.errorPasswordLength)
+      return
+    }
+    if (authPassword !== authConfirmPassword) {
+      setAuthError(t.auth.errorPasswordMismatch)
+      return
+    }
+
+    setLoading(true)
+    const { error } = await supabase.auth.updateUser({
+      password: authPassword,
+    })
+
+    if (error) {
+      setAuthError(error.message)
+    } else {
+      alert(t.auth.passwordResetSuccess)
+      setAuthPassword('')
+      setAuthConfirmPassword('')
+      setPage('landing')
+    }
+    setLoading(false)
   }
 
   // Mypage handlers
@@ -1403,6 +1484,13 @@ function App() {
                   placeholder="••••••••"
                   className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
                 />
+                <button
+                  type="button"
+                  onClick={() => { setPage('forgot-password'); setAuthError('') }}
+                  className="text-primary text-sm hover:underline text-right mt-1"
+                >
+                  {t.auth.forgotPassword}
+                </button>
               </div>
 
               <button
@@ -1559,6 +1647,148 @@ function App() {
                 {t.auth.login}
               </button>
             </p>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Forgot Password Page
+  if (page === 'forgot-password') {
+    return (
+      <div className="bg-background-dark text-white font-display min-h-screen">
+        <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+          <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+            <button onClick={() => setPage('login')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            </button>
+            <h2 className="text-white text-xl font-extrabold tracking-tight">
+              Style<span className="text-primary text-2xl">AI</span>
+            </h2>
+            <LanguageSelector />
+          </div>
+        </nav>
+
+        <main className="pt-24 pb-12 px-6 max-w-md mx-auto flex flex-col items-center justify-center min-h-[80vh]">
+          <div className="w-full">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-primary text-[32px]">lock_reset</span>
+              </div>
+              <h1 className="text-white text-2xl lg:text-3xl font-bold mb-2">{t.auth.forgotPasswordTitle}</h1>
+              <p className="text-white/60">{t.auth.forgotPasswordDesc}</p>
+            </div>
+
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              {authError && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 text-red-400 text-sm">
+                  {authError}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2">
+                <label className="text-white/80 text-sm font-medium">{t.auth.email}</label>
+                <input
+                  type="email"
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center rounded-xl h-14 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-background-dark/30 border-t-background-dark rounded-full animate-spin" />
+                ) : (
+                  t.auth.sendResetLink
+                )}
+              </button>
+            </form>
+
+            <p className="text-center mt-6 text-white/60">
+              <button
+                onClick={() => { setPage('login'); setAuthError('') }}
+                className="text-primary hover:underline font-medium"
+              >
+                {t.auth.backToLogin}
+              </button>
+            </p>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Reset Password Page
+  if (page === 'reset-password') {
+    return (
+      <div className="bg-background-dark text-white font-display min-h-screen">
+        <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+          <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+            <div className="w-10" />
+            <h2 className="text-white text-xl font-extrabold tracking-tight">
+              Style<span className="text-primary text-2xl">AI</span>
+            </h2>
+            <LanguageSelector />
+          </div>
+        </nav>
+
+        <main className="pt-24 pb-12 px-6 max-w-md mx-auto flex flex-col items-center justify-center min-h-[80vh]">
+          <div className="w-full">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-primary text-[32px]">key</span>
+              </div>
+              <h1 className="text-white text-2xl lg:text-3xl font-bold mb-2">{t.auth.resetPasswordTitle}</h1>
+              <p className="text-white/60">{t.auth.resetPasswordDesc}</p>
+            </div>
+
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              {authError && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 text-red-400 text-sm">
+                  {authError}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2">
+                <label className="text-white/80 text-sm font-medium">{t.auth.password}</label>
+                <input
+                  type="password"
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-white/80 text-sm font-medium">{t.auth.confirmPassword}</label>
+                <input
+                  type="password"
+                  value={authConfirmPassword}
+                  onChange={(e) => setAuthConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center rounded-xl h-14 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-background-dark/30 border-t-background-dark rounded-full animate-spin" />
+                ) : (
+                  t.auth.resetPassword
+                )}
+              </button>
+            </form>
           </div>
         </main>
       </div>
