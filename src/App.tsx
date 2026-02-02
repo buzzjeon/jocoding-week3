@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas'
 import { supabase } from './lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
-type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup' | 'mypage' | 'forgot-password' | 'reset-password' | 'subscription' | 'subscription-success' | 'partnership' | 'animal-test'
+type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup' | 'mypage' | 'forgot-password' | 'reset-password' | 'subscription' | 'subscription-success' | 'partnership' | 'animal-test' | 'about' | 'faq'
 type Language = 'en' | 'ko'
 
 const translations = {
@@ -57,6 +57,8 @@ const translations = {
       privacy: 'Privacy Policy',
       refund: 'Refund Policy',
       partnership: 'Partnership',
+      about: 'About',
+      faq: 'FAQ',
     },
     partnership: {
       title: 'Partnership Inquiry',
@@ -71,6 +73,48 @@ const translations = {
       submitting: 'Submitting...',
       success: 'Thank you! Your inquiry has been submitted successfully.',
       error: 'Failed to submit. Please try again.',
+    },
+    about: {
+      title: 'About StyleAI',
+      subtitle: 'Your Personal AI Fashion Expert',
+      mission: 'Our Mission',
+      missionText: 'StyleAI is revolutionizing personal fashion with cutting-edge artificial intelligence. We believe everyone deserves access to expert styling advice, and our AI-powered platform makes personalized fashion recommendations accessible to all.',
+      howItWorks: 'How It Works',
+      howItWorksText: 'Using advanced computer vision and machine learning algorithms, StyleAI analyzes your body proportions, skin tone, and personal preferences to deliver tailored fashion recommendations. Our technology has been trained on millions of fashion data points to understand what styles work best for different body types.',
+      team: 'Our Team',
+      teamText: 'StyleAI was founded by a team of fashion enthusiasts and AI engineers who share a passion for making style accessible. We combine deep expertise in machine learning with a genuine love for fashion to create a tool that truly helps people look and feel their best.',
+      values: 'Our Values',
+      value1Title: 'Inclusivity',
+      value1Text: 'Fashion advice for every body type, gender, and style preference.',
+      value2Title: 'Privacy First',
+      value2Text: 'Your photos are processed in real-time and never stored on our servers.',
+      value3Title: 'Continuous Improvement',
+      value3Text: 'Our AI learns and improves constantly to provide better recommendations.',
+      contact: 'Contact Us',
+      contactText: 'Have questions or feedback? We\'d love to hear from you.',
+      contactEmail: 'support@styleai.com',
+    },
+    faq: {
+      title: 'Frequently Asked Questions',
+      subtitle: 'Find answers to common questions about StyleAI',
+      q1: 'What is StyleAI?',
+      a1: 'StyleAI is an AI-powered personal styling platform that analyzes your body type, proportions, and preferences to provide personalized fashion recommendations. Our advanced algorithms help you discover styles that flatter your unique figure.',
+      q2: 'How does the body analysis work?',
+      a2: 'Simply upload a full-body photo, and our AI will analyze your proportions, body shape, and other factors. The analysis is done in real-time using advanced computer vision technology, and your photos are not stored on our servers.',
+      q3: 'Is my data safe?',
+      a3: 'Absolutely. We take privacy seriously. Your photos are processed in real-time and are not permanently stored. We use industry-standard encryption and follow strict data protection guidelines. Read our Privacy Policy for more details.',
+      q4: 'What is included in the free analysis?',
+      a4: 'The free analysis includes basic body type identification and general style recommendations. For detailed reports with specific product recommendations, color analysis, and hairstyle suggestions, check out our Premium plan.',
+      q5: 'How accurate are the recommendations?',
+      a5: 'Our AI has been trained on millions of fashion data points and continuously learns from user feedback. While individual preferences may vary, our recommendations are based on established fashion principles and body type science.',
+      q6: 'Can I use StyleAI on mobile?',
+      a6: 'Yes! StyleAI is fully responsive and works great on smartphones, tablets, and desktop computers. You can take a photo directly with your phone camera and get instant recommendations.',
+      q7: 'How do I get a refund?',
+      a7: 'If you\'re not satisfied with our Premium service, you can request a refund within 24 hours of purchase if you haven\'t used the service. Please refer to our Refund Policy for complete details.',
+      q8: 'How can I contact support?',
+      a8: 'You can reach our support team at support@styleai.com or use the Partnership Inquiry form on our website. We typically respond within 24-48 hours.',
+      stillHaveQuestions: 'Still have questions?',
+      contactUs: 'Contact our support team',
     },
     animalTest: {
       title: 'Animal Face Test',
@@ -369,6 +413,8 @@ For refund-related questions, please contact refunds@styleai.com.
       privacy: '개인정보처리방침',
       refund: '환불정책',
       partnership: '제휴문의',
+      about: '소개',
+      faq: 'FAQ',
     },
     partnership: {
       title: '제휴문의',
@@ -383,6 +429,48 @@ For refund-related questions, please contact refunds@styleai.com.
       submitting: '제출 중...',
       success: '감사합니다! 문의가 성공적으로 제출되었습니다.',
       error: '제출에 실패했습니다. 다시 시도해 주세요.',
+    },
+    about: {
+      title: 'StyleAI 소개',
+      subtitle: '당신만을 위한 AI 패션 전문가',
+      mission: '우리의 미션',
+      missionText: 'StyleAI는 최첨단 인공지능으로 개인 패션을 혁신하고 있습니다. 모든 사람이 전문적인 스타일링 조언을 받을 자격이 있다고 믿으며, AI 기반 플랫폼을 통해 맞춤형 패션 추천을 누구나 이용할 수 있도록 합니다.',
+      howItWorks: '작동 원리',
+      howItWorksText: '고급 컴퓨터 비전과 머신러닝 알고리즘을 사용하여 StyleAI는 체형, 피부톤, 개인 취향을 분석해 맞춤형 패션 추천을 제공합니다. 수백만 개의 패션 데이터로 학습된 기술이 각 체형에 가장 잘 어울리는 스타일을 파악합니다.',
+      team: '우리 팀',
+      teamText: 'StyleAI는 패션 애호가와 AI 엔지니어로 구성된 팀이 설립했습니다. 머신러닝 전문 지식과 패션에 대한 열정을 결합하여 사람들이 최고의 모습을 찾을 수 있도록 돕는 도구를 만듭니다.',
+      values: '핵심 가치',
+      value1Title: '포용성',
+      value1Text: '모든 체형, 성별, 스타일 취향을 위한 패션 조언을 제공합니다.',
+      value2Title: '개인정보 보호',
+      value2Text: '사진은 실시간으로 처리되며 서버에 저장되지 않습니다.',
+      value3Title: '지속적 개선',
+      value3Text: 'AI가 지속적으로 학습하여 더 나은 추천을 제공합니다.',
+      contact: '문의하기',
+      contactText: '질문이나 피드백이 있으신가요? 언제든지 연락해 주세요.',
+      contactEmail: 'support@styleai.com',
+    },
+    faq: {
+      title: '자주 묻는 질문',
+      subtitle: 'StyleAI에 대한 궁금한 점을 해결하세요',
+      q1: 'StyleAI란 무엇인가요?',
+      a1: 'StyleAI는 체형, 비율, 취향을 분석하여 맞춤형 패션 추천을 제공하는 AI 기반 스타일링 플랫폼입니다. 고급 알고리즘이 당신만의 독특한 체형에 어울리는 스타일을 찾아드립니다.',
+      q2: '체형 분석은 어떻게 작동하나요?',
+      a2: '전신 사진을 업로드하면 AI가 비율, 체형 등을 분석합니다. 고급 컴퓨터 비전 기술로 실시간 분석이 이루어지며, 사진은 서버에 저장되지 않습니다.',
+      q3: '내 데이터는 안전한가요?',
+      a3: '물론입니다. 개인정보 보호를 최우선으로 합니다. 사진은 실시간 처리 후 저장되지 않으며, 업계 표준 암호화와 엄격한 데이터 보호 지침을 따릅니다. 자세한 내용은 개인정보처리방침을 확인하세요.',
+      q4: '무료 분석에는 무엇이 포함되나요?',
+      a4: '무료 분석에는 기본 체형 식별과 일반적인 스타일 추천이 포함됩니다. 상세 리포트, 제품 추천, 컬러 분석, 헤어스타일 제안은 프리미엄 플랜을 확인하세요.',
+      q5: '추천의 정확도는 어떤가요?',
+      a5: 'AI는 수백만 개의 패션 데이터로 학습되었으며 사용자 피드백을 통해 지속적으로 발전합니다. 개인 취향은 다를 수 있지만, 추천은 검증된 패션 원칙과 체형 과학에 기반합니다.',
+      q6: '모바일에서도 사용할 수 있나요?',
+      a6: '네! StyleAI는 완전 반응형이며 스마트폰, 태블릿, 데스크톱에서 모두 잘 작동합니다. 휴대폰 카메라로 직접 사진을 찍고 즉시 추천을 받을 수 있습니다.',
+      q7: '환불은 어떻게 받나요?',
+      a7: '프리미엄 서비스에 만족하지 않으시면 구매 후 24시간 이내, 서비스 사용 전에 환불을 요청할 수 있습니다. 자세한 내용은 환불정책을 확인하세요.',
+      q8: '고객지원에 어떻게 연락하나요?',
+      a8: 'support@styleai.com으로 이메일을 보내거나 웹사이트의 제휴문의 양식을 이용하세요. 보통 24-48시간 이내에 답변드립니다.',
+      stillHaveQuestions: '아직 궁금한 점이 있으신가요?',
+      contactUs: '고객지원팀에 문의하기',
     },
     animalTest: {
       title: '동물상 테스트',
@@ -1798,6 +1886,8 @@ function App() {
               <span className="material-symbols-outlined hover:text-primary cursor-pointer transition-colors">mail</span>
             </div>
             <div className="flex justify-center gap-6 mb-6 text-sm flex-wrap">
+              <button onClick={() => setPage('about')} className="text-white/40 hover:text-white transition-colors">{t.footer.about}</button>
+              <button onClick={() => setPage('faq')} className="text-white/40 hover:text-white transition-colors">{t.footer.faq}</button>
               <button onClick={() => setPage('terms')} className="text-white/40 hover:text-white transition-colors">{t.footer.terms}</button>
               <button onClick={() => setPage('privacy')} className="text-white/40 hover:text-white transition-colors">{t.footer.privacy}</button>
               <button onClick={() => setPage('refund')} className="text-white/40 hover:text-white transition-colors">{t.footer.refund}</button>
@@ -2043,6 +2133,156 @@ function App() {
           <p className="text-white/60 lg:text-lg mb-8">{t.partnership.description}</p>
 
           <PartnershipForm t={t} />
+        </main>
+      </div>
+    )
+  }
+
+  // About Page
+  if (page === 'about') {
+    return (
+      <div className="bg-background-dark text-white font-display min-h-screen">
+        <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+          <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            </button>
+            <h2 className="text-white text-xl font-extrabold tracking-tight">
+              Style<span className="text-primary text-2xl">AI</span>
+            </h2>
+            <LanguageSelector />
+          </div>
+        </nav>
+
+        <main className="pt-24 pb-12 px-6 max-w-4xl mx-auto">
+          {/* Hero Section */}
+          <div className="text-center mb-16">
+            <h1 className="text-white text-4xl lg:text-5xl font-bold mb-4">{t.about.title}</h1>
+            <p className="text-primary text-xl">{t.about.subtitle}</p>
+          </div>
+
+          {/* Mission Section */}
+          <section className="mb-16">
+            <h2 className="text-white text-2xl font-bold mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">flag</span>
+              {t.about.mission}
+            </h2>
+            <p className="text-white/70 leading-relaxed text-lg">{t.about.missionText}</p>
+          </section>
+
+          {/* How It Works Section */}
+          <section className="mb-16 bg-white/5 border border-white/10 rounded-2xl p-8">
+            <h2 className="text-white text-2xl font-bold mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">psychology</span>
+              {t.about.howItWorks}
+            </h2>
+            <p className="text-white/70 leading-relaxed">{t.about.howItWorksText}</p>
+          </section>
+
+          {/* Values Section */}
+          <section className="mb-16">
+            <h2 className="text-white text-2xl font-bold mb-8 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">favorite</span>
+              {t.about.values}
+            </h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-primary">diversity_3</span>
+                </div>
+                <h3 className="text-white text-lg font-bold mb-2">{t.about.value1Title}</h3>
+                <p className="text-white/60 text-sm">{t.about.value1Text}</p>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-primary">shield</span>
+                </div>
+                <h3 className="text-white text-lg font-bold mb-2">{t.about.value2Title}</h3>
+                <p className="text-white/60 text-sm">{t.about.value2Text}</p>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-primary">trending_up</span>
+                </div>
+                <h3 className="text-white text-lg font-bold mb-2">{t.about.value3Title}</h3>
+                <p className="text-white/60 text-sm">{t.about.value3Text}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Team Section */}
+          <section className="mb-16">
+            <h2 className="text-white text-2xl font-bold mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">groups</span>
+              {t.about.team}
+            </h2>
+            <p className="text-white/70 leading-relaxed">{t.about.teamText}</p>
+          </section>
+
+          {/* Contact Section */}
+          <section className="bg-gradient-to-r from-primary/20 to-purple-500/20 border border-primary/30 rounded-2xl p-8 text-center">
+            <h2 className="text-white text-2xl font-bold mb-2">{t.about.contact}</h2>
+            <p className="text-white/70 mb-4">{t.about.contactText}</p>
+            <a href={`mailto:${t.about.contactEmail}`} className="text-primary hover:underline font-medium">{t.about.contactEmail}</a>
+          </section>
+        </main>
+      </div>
+    )
+  }
+
+  // FAQ Page
+  if (page === 'faq') {
+    return (
+      <div className="bg-background-dark text-white font-display min-h-screen">
+        <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+          <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            </button>
+            <h2 className="text-white text-xl font-extrabold tracking-tight">
+              Style<span className="text-primary text-2xl">AI</span>
+            </h2>
+            <LanguageSelector />
+          </div>
+        </nav>
+
+        <main className="pt-24 pb-12 px-6 max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-white text-4xl lg:text-5xl font-bold mb-4">{t.faq.title}</h1>
+            <p className="text-white/60 text-lg">{t.faq.subtitle}</p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              { q: t.faq.q1, a: t.faq.a1 },
+              { q: t.faq.q2, a: t.faq.a2 },
+              { q: t.faq.q3, a: t.faq.a3 },
+              { q: t.faq.q4, a: t.faq.a4 },
+              { q: t.faq.q5, a: t.faq.a5 },
+              { q: t.faq.q6, a: t.faq.a6 },
+              { q: t.faq.q7, a: t.faq.a7 },
+              { q: t.faq.q8, a: t.faq.a8 },
+            ].map((item, index) => (
+              <details key={index} className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                <summary className="flex items-center justify-between p-6 cursor-pointer hover:bg-white/5 transition-colors">
+                  <span className="text-white font-medium pr-4">{item.q}</span>
+                  <span className="material-symbols-outlined text-primary group-open:rotate-180 transition-transform">expand_more</span>
+                </summary>
+                <div className="px-6 pb-6 text-white/70 leading-relaxed">{item.a}</div>
+              </details>
+            ))}
+          </div>
+
+          {/* Still Have Questions */}
+          <div className="mt-12 bg-gradient-to-r from-primary/20 to-purple-500/20 border border-primary/30 rounded-2xl p-8 text-center">
+            <h3 className="text-white text-xl font-bold mb-2">{t.faq.stillHaveQuestions}</h3>
+            <button
+              onClick={() => setPage('partnership')}
+              className="text-primary hover:underline font-medium"
+            >
+              {t.faq.contactUs} →
+            </button>
+          </div>
         </main>
       </div>
     )
