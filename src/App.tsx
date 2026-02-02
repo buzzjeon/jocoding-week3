@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas'
 import { supabase } from './lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
-type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup' | 'mypage' | 'forgot-password' | 'reset-password' | 'subscription' | 'subscription-success'
+type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup' | 'mypage' | 'forgot-password' | 'reset-password' | 'subscription' | 'subscription-success' | 'partnership' | 'animal-test'
 type Language = 'en' | 'ko'
 
 const translations = {
@@ -56,6 +56,36 @@ const translations = {
       terms: 'Terms of Service',
       privacy: 'Privacy Policy',
       refund: 'Refund Policy',
+      partnership: 'Partnership',
+    },
+    partnership: {
+      title: 'Partnership Inquiry',
+      description: 'Interested in partnering with StyleAI? Fill out the form below and we\'ll get back to you.',
+      companyName: 'Company Name',
+      contactName: 'Contact Name',
+      email: 'Email',
+      phone: 'Phone Number',
+      message: 'Message',
+      messagePlaceholder: 'Tell us about your partnership idea...',
+      submit: 'Submit Inquiry',
+      submitting: 'Submitting...',
+      success: 'Thank you! Your inquiry has been submitted successfully.',
+      error: 'Failed to submit. Please try again.',
+    },
+    animalTest: {
+      title: 'Animal Face Test',
+      description: 'Which animal do you resemble? Take a fun test with AI!',
+      uploadPhoto: 'Upload your photo',
+      takePhoto: 'Or take a photo',
+      analyzing: 'Analyzing...',
+      result: 'Your Animal Type',
+      dog: 'Dog',
+      cat: 'Cat',
+      dogDesc: 'You have a friendly, loyal, and warm impression! Like a puppy, you give trustworthy vibes.',
+      catDesc: 'You have a mysterious, independent, and elegant charm! Like a cat, you have a captivating aura.',
+      confidence: 'Confidence',
+      tryAgain: 'Try Again',
+      backToResult: 'Back to Results',
     },
     terms: {
       title: 'Terms of Service',
@@ -338,6 +368,36 @@ For refund-related questions, please contact refunds@styleai.com.
       terms: '이용약관',
       privacy: '개인정보처리방침',
       refund: '환불정책',
+      partnership: '제휴문의',
+    },
+    partnership: {
+      title: '제휴문의',
+      description: 'StyleAI와 파트너십에 관심이 있으신가요? 아래 양식을 작성해 주시면 연락드리겠습니다.',
+      companyName: '회사명',
+      contactName: '담당자명',
+      email: '이메일',
+      phone: '연락처',
+      message: '문의내용',
+      messagePlaceholder: '제휴 아이디어에 대해 알려주세요...',
+      submit: '문의하기',
+      submitting: '제출 중...',
+      success: '감사합니다! 문의가 성공적으로 제출되었습니다.',
+      error: '제출에 실패했습니다. 다시 시도해 주세요.',
+    },
+    animalTest: {
+      title: '동물상 테스트',
+      description: '나는 어떤 동물을 닮았을까? AI로 재미있게 테스트해보세요!',
+      uploadPhoto: '사진 업로드',
+      takePhoto: '또는 사진 촬영',
+      analyzing: '분석 중...',
+      result: '당신의 동물상',
+      dog: '강아지상',
+      cat: '고양이상',
+      dogDesc: '친근하고 충성스러우며 따뜻한 인상을 가지고 있어요! 강아지처럼 믿음직스러운 느낌을 줍니다.',
+      catDesc: '신비롭고 독립적이며 우아한 매력을 가지고 있어요! 고양이처럼 사람을 끌어당기는 아우라가 있습니다.',
+      confidence: '확률',
+      tryAgain: '다시 테스트',
+      backToResult: '결과로 돌아가기',
     },
     terms: {
       title: '이용약관',
@@ -571,6 +631,467 @@ StyleAI는 구매 즉시 제공되는 디지털 서비스입니다. AI가 생성
       },
     },
   },
+}
+
+function PartnershipForm({ t }: { t: typeof translations.en }) {
+  const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setFormStatus('submitting')
+
+    const form = e.currentTarget
+    const formData = new FormData(form)
+
+    try {
+      const response = await fetch('https://formspree.io/f/mgozzbvp', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        setFormStatus('success')
+        form.reset()
+      } else {
+        setFormStatus('error')
+      }
+    } catch {
+      setFormStatus('error')
+    }
+  }
+
+  if (formStatus === 'success') {
+    return (
+      <div className="text-center py-12">
+        <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
+          <span className="material-symbols-outlined text-green-500 text-[32px]">check_circle</span>
+        </div>
+        <p className="text-white/80 text-lg">{t.partnership.success}</p>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label className="block text-white/60 text-sm mb-2">{t.partnership.companyName}</label>
+        <input
+          type="text"
+          name="company"
+          required
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
+        />
+      </div>
+
+      <div>
+        <label className="block text-white/60 text-sm mb-2">{t.partnership.contactName}</label>
+        <input
+          type="text"
+          name="name"
+          required
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
+        />
+      </div>
+
+      <div>
+        <label className="block text-white/60 text-sm mb-2">{t.partnership.email}</label>
+        <input
+          type="email"
+          name="email"
+          required
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
+        />
+      </div>
+
+      <div>
+        <label className="block text-white/60 text-sm mb-2">{t.partnership.phone}</label>
+        <input
+          type="tel"
+          name="phone"
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
+        />
+      </div>
+
+      <div>
+        <label className="block text-white/60 text-sm mb-2">{t.partnership.message}</label>
+        <textarea
+          name="message"
+          required
+          rows={5}
+          placeholder={t.partnership.messagePlaceholder}
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors resize-none"
+        />
+      </div>
+
+      {formStatus === 'error' && (
+        <p className="text-red-400 text-sm">{t.partnership.error}</p>
+      )}
+
+      <button
+        type="submit"
+        disabled={formStatus === 'submitting'}
+        className="w-full flex items-center justify-center rounded-xl h-14 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {formStatus === 'submitting' ? t.partnership.submitting : t.partnership.submit}
+      </button>
+    </form>
+  )
+}
+
+function DisqusComments({ pageIdentifier, pageUrl }: { pageIdentifier: string; pageUrl?: string }) {
+  useEffect(() => {
+    const disqusScript = document.getElementById('disqus-script')
+    if (disqusScript) {
+      disqusScript.remove()
+    }
+
+    const disqusThread = document.getElementById('disqus_thread')
+    if (disqusThread) {
+      disqusThread.innerHTML = ''
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).disqus_config = function (this: any) {
+      this.page = this.page || {}
+      this.page.url = pageUrl || window.location.href
+      this.page.identifier = pageIdentifier
+    }
+
+    const script = document.createElement('script')
+    script.id = 'disqus-script'
+    script.src = 'https://jpersonalstylist.disqus.com/embed.js'
+    script.setAttribute('data-timestamp', String(+new Date()))
+    script.async = true
+    document.body.appendChild(script)
+
+    return () => {
+      const scriptToRemove = document.getElementById('disqus-script')
+      if (scriptToRemove) {
+        scriptToRemove.remove()
+      }
+    }
+  }, [pageIdentifier, pageUrl])
+
+  return (
+    <div className="bg-white/5 rounded-2xl p-6 lg:p-8">
+      <div id="disqus_thread" />
+      <noscript>
+        Please enable JavaScript to view the{' '}
+        <a href="https://disqus.com/?ref_noscript" className="text-primary hover:underline">
+          comments powered by Disqus.
+        </a>
+      </noscript>
+    </div>
+  )
+}
+
+interface AnimalTestPageProps {
+  t: typeof translations.en
+  lang: Language
+  setPage: (page: Page) => void
+  LanguageSelector: () => React.ReactNode
+}
+
+function AnimalTestPage({ t, lang, setPage, LanguageSelector }: AnimalTestPageProps) {
+  const [testPhoto, setTestPhoto] = useState<string | null>(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [result, setResult] = useState<{ className: string; probability: number } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [scriptsLoaded, setScriptsLoaded] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const imageRef = useRef<HTMLImageElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const modelRef = useRef<any>(null)
+
+  const MODEL_URL = 'https://teachablemachine.withgoogle.com/models/VYFZTB2fH/'
+
+  useEffect(() => {
+    // Load TensorFlow.js and Teachable Machine library
+    const loadScripts = async () => {
+      try {
+        // Check if already loaded
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((window as any).tmImage) {
+          setScriptsLoaded(true)
+          return
+        }
+
+        if (!document.getElementById('tf-script')) {
+          const tfScript = document.createElement('script')
+          tfScript.id = 'tf-script'
+          tfScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js'
+          document.head.appendChild(tfScript)
+          await new Promise((resolve, reject) => {
+            tfScript.onload = resolve
+            tfScript.onerror = reject
+          })
+        }
+
+        if (!document.getElementById('tm-script')) {
+          const tmScript = document.createElement('script')
+          tmScript.id = 'tm-script'
+          tmScript.src = 'https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js'
+          document.head.appendChild(tmScript)
+          await new Promise((resolve, reject) => {
+            tmScript.onload = resolve
+            tmScript.onerror = reject
+          })
+        }
+
+        setScriptsLoaded(true)
+      } catch (err) {
+        console.error('Failed to load scripts:', err)
+        setError(lang === 'ko' ? 'AI 라이브러리 로딩에 실패했습니다.' : 'Failed to load AI library.')
+      }
+    }
+
+    loadScripts()
+  }, [lang])
+
+  const loadModel = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tmImage = (window as any).tmImage
+    if (!tmImage) {
+      throw new Error('Teachable Machine library not loaded')
+    }
+
+    const modelURL = MODEL_URL + 'model.json'
+    const metadataURL = MODEL_URL + 'metadata.json'
+
+    const model = await tmImage.load(modelURL, metadataURL)
+    return model
+  }
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setError(null)
+      setImageLoaded(false)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setTestPhoto(reader.result as string)
+        setResult(null)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleImageLoad = () => {
+    setImageLoaded(true)
+  }
+
+  const analyzeImage = async () => {
+    if (!testPhoto || !imageRef.current || !imageLoaded) return
+
+    setAnalyzing(true)
+    setError(null)
+    try {
+      if (!modelRef.current) {
+        modelRef.current = await loadModel()
+      }
+
+      if (!modelRef.current) {
+        throw new Error('Failed to load model')
+      }
+
+      const predictions = await modelRef.current.predict(imageRef.current)
+
+      // Find the highest probability prediction
+      const topPrediction = predictions.reduce((prev: { probability: number }, curr: { probability: number }) =>
+        prev.probability > curr.probability ? prev : curr
+      )
+
+      setResult({
+        className: topPrediction.className,
+        probability: topPrediction.probability
+      })
+    } catch (err) {
+      console.error('Analysis failed:', err)
+      setError(lang === 'ko' ? '분석에 실패했습니다. 다시 시도해주세요.' : 'Analysis failed. Please try again.')
+    } finally {
+      setAnalyzing(false)
+    }
+  }
+
+  const handleReset = () => {
+    setTestPhoto(null)
+    setResult(null)
+  }
+
+  const getAnimalEmoji = (className: string) => {
+    const lower = className.toLowerCase()
+    if (lower.includes('dog') || lower.includes('강아지')) return '🐶'
+    if (lower.includes('cat') || lower.includes('고양이')) return '🐱'
+    return '🐾'
+  }
+
+  const getAnimalName = (className: string) => {
+    const lower = className.toLowerCase()
+    if (lower.includes('dog') || lower.includes('강아지')) return t.animalTest.dog
+    if (lower.includes('cat') || lower.includes('고양이')) return t.animalTest.cat
+    return className
+  }
+
+  const getAnimalDesc = (className: string) => {
+    const lower = className.toLowerCase()
+    if (lower.includes('dog') || lower.includes('강아지')) return t.animalTest.dogDesc
+    if (lower.includes('cat') || lower.includes('고양이')) return t.animalTest.catDesc
+    return ''
+  }
+
+  return (
+    <div className="bg-background-dark text-white font-display min-h-screen">
+      <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+        <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+          <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+          </button>
+          <h2 className="text-white text-xl font-extrabold tracking-tight">
+            Style<span className="text-primary text-2xl">AI</span>
+          </h2>
+          <LanguageSelector />
+        </div>
+      </nav>
+
+      <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <span className="text-5xl">🐶</span>
+            <span className="text-5xl">🐱</span>
+          </div>
+          <h1 className="text-white text-3xl lg:text-4xl font-bold mb-2">{t.animalTest.title}</h1>
+          <p className="text-white/60 lg:text-lg">{t.animalTest.description}</p>
+        </div>
+
+        {!result ? (
+          <div className="space-y-6">
+            {/* Photo Upload */}
+            <div
+              className="relative w-full h-72 lg:h-96 border-2 border-dashed border-amber-500/50 rounded-2xl cursor-pointer overflow-hidden hover:border-amber-500 transition-colors bg-gradient-to-br from-amber-500/5 to-orange-500/5"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {testPhoto ? (
+                <img
+                  ref={imageRef}
+                  src={testPhoto}
+                  alt="Test"
+                  className="w-full h-full object-cover"
+                  onLoad={handleImageLoad}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-white/50">
+                  <span className="material-symbols-outlined text-[64px] text-amber-500">add_a_photo</span>
+                  <span className="text-lg">{t.animalTest.uploadPhoto}</span>
+                </div>
+              )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handlePhotoChange}
+                accept="image/*"
+                hidden
+              />
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 text-red-400 text-sm text-center">
+                {error}
+              </div>
+            )}
+
+            {/* Loading Status */}
+            {!scriptsLoaded && (
+              <div className="text-center text-white/60 text-sm">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                  {lang === 'ko' ? 'AI 모델 로딩 중...' : 'Loading AI model...'}
+                </div>
+              </div>
+            )}
+
+            {/* Analyze Button */}
+            {testPhoto && (
+              <button
+                onClick={analyzeImage}
+                disabled={analyzing || !scriptsLoaded || !imageLoaded}
+                className="w-full flex items-center justify-center rounded-xl h-14 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {analyzing ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    {t.animalTest.analyzing}
+                  </div>
+                ) : !imageLoaded ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    {lang === 'ko' ? '이미지 로딩 중...' : 'Loading image...'}
+                  </div>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined mr-2">pets</span>
+                    {lang === 'ko' ? '분석하기' : 'Analyze'}
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Result Card */}
+            <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl p-8 text-center">
+              <div className="text-8xl mb-4">{getAnimalEmoji(result.className)}</div>
+              <p className="text-white/60 text-sm mb-2">{t.animalTest.result}</p>
+              <h2 className="text-white text-3xl lg:text-4xl font-bold mb-4">{getAnimalName(result.className)}</h2>
+              <p className="text-white/70 mb-6">{getAnimalDesc(result.className)}</p>
+
+              {/* Confidence Bar */}
+              <div className="max-w-xs mx-auto">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-white/60">{t.animalTest.confidence}</span>
+                  <span className="text-amber-400 font-bold">{Math.round(result.probability * 100)}%</span>
+                </div>
+                <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
+                    style={{ width: `${result.probability * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Photo Preview */}
+            {testPhoto && (
+              <div className="rounded-2xl overflow-hidden">
+                <img src={testPhoto} alt="Your photo" className="w-full h-64 object-cover" />
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleReset}
+                className="flex-1 flex items-center justify-center rounded-xl h-14 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-lg font-bold tracking-tight hover:brightness-110 transition-all"
+              >
+                <span className="material-symbols-outlined mr-2">refresh</span>
+                {t.animalTest.tryAgain}
+              </button>
+              <button
+                onClick={() => setPage('landing')}
+                className="flex-1 flex items-center justify-center rounded-xl h-14 bg-white/5 border border-white/10 text-white text-lg font-medium tracking-tight hover:bg-white/10 transition-all"
+              >
+                {t.animalTest.backToResult}
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  )
 }
 
 function App() {
@@ -1261,6 +1782,14 @@ function App() {
             </div>
           </section>
 
+          {/* Comments Section */}
+          <section className="px-6 py-16 max-w-4xl mx-auto">
+            <h2 className="text-white text-2xl lg:text-3xl font-extrabold tracking-tight text-center mb-8">
+              {lang === 'ko' ? '댓글' : 'Comments'}
+            </h2>
+            <DisqusComments pageIdentifier="landing" />
+          </section>
+
           {/* Footer */}
           <footer className="p-10 border-t border-white/5 text-center">
             <div className="flex justify-center gap-6 mb-6 text-white/40">
@@ -1268,10 +1797,11 @@ function App() {
               <span className="material-symbols-outlined hover:text-primary cursor-pointer transition-colors">language</span>
               <span className="material-symbols-outlined hover:text-primary cursor-pointer transition-colors">mail</span>
             </div>
-            <div className="flex justify-center gap-6 mb-6 text-sm">
+            <div className="flex justify-center gap-6 mb-6 text-sm flex-wrap">
               <button onClick={() => setPage('terms')} className="text-white/40 hover:text-white transition-colors">{t.footer.terms}</button>
               <button onClick={() => setPage('privacy')} className="text-white/40 hover:text-white transition-colors">{t.footer.privacy}</button>
               <button onClick={() => setPage('refund')} className="text-white/40 hover:text-white transition-colors">{t.footer.refund}</button>
+              <button onClick={() => setPage('partnership')} className="text-white/40 hover:text-white transition-colors">{t.footer.partnership}</button>
             </div>
             <p className="text-white/20 text-xs tracking-wider">{t.footer.copyright}</p>
           </footer>
@@ -1490,6 +2020,37 @@ function App() {
   // Refund Policy Page
   if (page === 'refund') {
     return <PolicyPage title={t.refund.title} lastUpdated={t.refund.lastUpdated} content={t.refund.content} />
+  }
+
+  // Partnership Page
+  if (page === 'partnership') {
+    return (
+      <div className="bg-background-dark text-white font-display min-h-screen">
+        <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+          <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
+            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            </button>
+            <h2 className="text-white text-xl font-extrabold tracking-tight">
+              Style<span className="text-primary text-2xl">AI</span>
+            </h2>
+            <LanguageSelector />
+          </div>
+        </nav>
+
+        <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto">
+          <h1 className="text-white text-3xl lg:text-4xl font-bold mb-4">{t.partnership.title}</h1>
+          <p className="text-white/60 lg:text-lg mb-8">{t.partnership.description}</p>
+
+          <PartnershipForm t={t} />
+        </main>
+      </div>
+    )
+  }
+
+  // Animal Test Page
+  if (page === 'animal-test') {
+    return <AnimalTestPage t={t} lang={lang} setPage={setPage} LanguageSelector={LanguageSelector} />
   }
 
   // Payment Success Page
@@ -2316,6 +2877,23 @@ function App() {
             className="flex-1 flex items-center justify-center rounded-xl h-14 bg-white/5 border border-white/10 text-white text-lg font-medium tracking-tight hover:bg-white/10 transition-all"
           >
             {t.result.backHome}
+          </button>
+        </div>
+
+        {/* Animal Test Banner */}
+        <div className="mt-12 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl p-6 text-center">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <span className="text-3xl">🐶</span>
+            <span className="text-3xl">🐱</span>
+          </div>
+          <h3 className="text-white text-xl font-bold mb-2">{t.animalTest.title}</h3>
+          <p className="text-white/60 text-sm mb-4">{t.animalTest.description}</p>
+          <button
+            onClick={() => setPage('animal-test')}
+            className="inline-flex items-center justify-center rounded-xl h-12 px-8 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold tracking-tight hover:brightness-110 transition-all shadow-lg"
+          >
+            <span className="material-symbols-outlined mr-2">pets</span>
+            {lang === 'ko' ? '테스트 하러가기' : 'Take the Test'}
           </button>
         </div>
       </main>
