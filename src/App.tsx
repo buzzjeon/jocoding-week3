@@ -1666,6 +1666,31 @@ function App() {
     navigateTo('mypage')
   }
 
+  const compressImage = async (dataUrl: string, maxWidth = 768, maxHeight = 1024, quality = 0.75) => {
+    return await new Promise<string>((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        let { width, height } = img
+        const scale = Math.min(1, maxWidth / width, maxHeight / height)
+        width = Math.round(width * scale)
+        height = Math.round(height * scale)
+
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(dataUrl)
+          return
+        }
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.onerror = () => resolve(dataUrl)
+      img.src = dataUrl
+    })
+  }
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -1690,6 +1715,7 @@ function App() {
     setHairstyleImage(null)
 
     try {
+      const compressedPhoto = photo ? await compressImage(photo) : null
       const antiBotToken = await getAntiBotToken()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (antiBotToken) {
@@ -1698,7 +1724,7 @@ function App() {
       const response = await fetch('/api/consult', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ photo, gender, height, weight }),
+        body: JSON.stringify({ photo: compressedPhoto, gender, height, weight }),
       })
 
       const data = await response.json()

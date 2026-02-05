@@ -124,10 +124,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: photo ? 'gpt-4o' : 'gpt-4o-mini',
+        model: 'gpt-4o-mini',
         messages: messages,
-        max_tokens: 4000,
-        temperature: 0.7,
+        max_tokens: 1200,
+        temperature: 0.6,
       }),
     });
 
@@ -166,8 +166,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         formData.append('prompt', `너는 최고의 헤어스타일리스트야. 3x3 그리드로, 어떤 헤어스타일인지 설명과 함께 첨부한 사진속 사람이랑 최고로 잘 어울리는 헤어스타일 9개 생성해줘. ${genderText}에게 어울리는 스타일로 만들어줘.`);
         formData.append('model', 'gpt-image-1');
         formData.append('n', '1');
-        formData.append('size', '1024x1024');
-        formData.append('quality', 'auto');
+        formData.append('size', '512x512');
+        formData.append('quality', 'low');
 
         const imageResponse = await fetch('https://api.openai.com/v1/images/edits', {
           method: 'POST',
