@@ -1888,6 +1888,83 @@ Thank you for using StyleAI!`
     }
   }
 
+  const openEmailPanel = (testMode: boolean) => {
+    setIsTestEmail(testMode)
+    setShowEmailModal(true)
+    setEmailStatus('idle')
+  }
+
+  const EmailPanel = () => (
+    <div className="mt-6">
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 lg:p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-white text-lg font-bold">
+            {isTestEmail ? t.emailTest.title : t.result.emailModalTitle}
+          </h3>
+          <button
+            onClick={() => {
+              setShowEmailModal(false)
+              setEmailAddress('')
+              setEmailStatus('idle')
+              setIsTestEmail(false)
+            }}
+            className="text-white/60 hover:text-white transition-colors"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <input
+            type="email"
+            value={emailAddress}
+            onChange={(e) => {
+              setEmailAddress(e.target.value)
+              setEmailStatus('idle')
+            }}
+            placeholder={t.result.emailPlaceholder}
+            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary/50 transition-colors"
+            disabled={emailSending}
+          />
+
+          {emailStatus === 'success' && (
+            <div className="flex items-center gap-2 text-green-400 text-sm">
+              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+              {isTestEmail ? t.emailTest.success : t.result.emailSuccess}
+            </div>
+          )}
+
+          {emailStatus === 'error' && (
+            <div className="flex items-center gap-2 text-red-400 text-sm">
+              <span className="material-symbols-outlined text-[18px]">error</span>
+              {emailAddress && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAddress)
+                ? t.result.emailInvalid
+                : (isTestEmail ? t.emailTest.error : t.result.emailError)}
+            </div>
+          )}
+
+          <button
+            onClick={isTestEmail ? handleSendTestEmail : handleSendEmail}
+            disabled={emailSending || !emailAddress}
+            className="w-full py-3 rounded-xl bg-primary text-background-dark font-bold hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {emailSending ? (
+              <>
+                <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                {t.result.emailSending}
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-[20px]">send</span>
+                {t.result.emailSend}
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
   // Language Selector Component
   const LanguageSelector = () => (
     <div className="relative">
@@ -2146,16 +2223,14 @@ Thank you for using StyleAI!`
               <h3 className="text-white text-xl font-bold mb-2">{t.emailTest.title}</h3>
               <p className="text-white/60 text-sm mb-4">{t.emailTest.description}</p>
               <button
-                onClick={() => {
-                  setIsTestEmail(true)
-                  setShowEmailModal(true)
-                }}
+                onClick={() => openEmailPanel(true)}
                 className="inline-flex items-center justify-center gap-2 rounded-xl h-12 px-6 bg-primary text-background-dark font-bold hover:brightness-110 transition-all"
               >
                 <span className="material-symbols-outlined text-[20px]">send</span>
                 {t.emailTest.button}
               </button>
             </div>
+            {showEmailModal && <EmailPanel />}
           </section>
 
           {/* Comments Section */}
@@ -2207,77 +2282,7 @@ Thank you for using StyleAI!`
           </div>
         </div>
 
-        {/* Email Modal */}
-        {showEmailModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-            <div className="bg-background-dark border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-white text-xl font-bold">
-                  {isTestEmail ? t.emailTest.title : t.result.emailModalTitle}
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowEmailModal(false)
-                    setEmailAddress('')
-                    setEmailStatus('idle')
-                    setIsTestEmail(false)
-                  }}
-                  className="text-white/60 hover:text-white transition-colors"
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <input
-                  type="email"
-                  value={emailAddress}
-                  onChange={(e) => {
-                    setEmailAddress(e.target.value)
-                    setEmailStatus('idle')
-                  }}
-                  placeholder={t.result.emailPlaceholder}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary/50 transition-colors"
-                  disabled={emailSending}
-                />
-
-                {emailStatus === 'success' && (
-                  <div className="flex items-center gap-2 text-green-400 text-sm">
-                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                    {isTestEmail ? t.emailTest.success : t.result.emailSuccess}
-                  </div>
-                )}
-
-                {emailStatus === 'error' && (
-                  <div className="flex items-center gap-2 text-red-400 text-sm">
-                    <span className="material-symbols-outlined text-[18px]">error</span>
-                    {emailAddress && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAddress)
-                      ? t.result.emailInvalid
-                      : (isTestEmail ? t.emailTest.error : t.result.emailError)}
-                  </div>
-                )}
-
-                <button
-                  onClick={isTestEmail ? handleSendTestEmail : handleSendEmail}
-                  disabled={emailSending || !emailAddress}
-                  className="w-full py-3 rounded-xl bg-primary text-background-dark font-bold hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {emailSending ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
-                      {t.result.emailSending}
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-[20px]">send</span>
-                      {t.result.emailSend}
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {showEmailModal && <EmailPanel />}
       </div>
     )
   }
@@ -3434,10 +3439,7 @@ Thank you for using StyleAI!`
               )}
             </button>
             <button
-              onClick={() => {
-                setIsTestEmail(false)
-                setShowEmailModal(true)
-              }}
+              onClick={() => openEmailPanel(false)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/20 hover:bg-primary/30 transition-colors text-primary text-sm font-medium"
             >
               <span className="material-symbols-outlined text-[20px]">mail</span>
