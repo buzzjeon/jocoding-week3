@@ -1576,21 +1576,18 @@ function App() {
         return
       }
 
-      const antiBotToken = await getAntiBotToken()
-      if (!antiBotToken) {
-        setMypageError(lang === 'ko' ? '보안 토큰을 가져오지 못했습니다.' : 'Failed to get security token.')
-        setLoading(false)
-        return
-      }
-
       // Call delete account API
+      const antiBotToken = await getAntiBotToken()
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      }
+      if (antiBotToken) {
+        headers['X-AntiBot-Token'] = antiBotToken
+      }
       const response = await fetch('/api/delete-account', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          'X-AntiBot-Token': antiBotToken,
-        },
+        headers,
       })
 
       const data = await response.json()
@@ -1621,17 +1618,13 @@ function App() {
     setLoading(true)
     try {
       const antiBotToken = await getAntiBotToken()
-      if (!antiBotToken) {
-        alert(lang === 'ko' ? '보안 토큰을 가져오지 못했습니다.' : 'Failed to get security token.')
-        return
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (antiBotToken) {
+        headers['X-AntiBot-Token'] = antiBotToken
       }
-
       const response = await fetch('/api/subscribe', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-AntiBot-Token': antiBotToken,
-        },
+        headers,
         body: JSON.stringify({
           origin: window.location.origin,
           userId: user.id,
@@ -1691,17 +1684,13 @@ function App() {
 
     try {
       const antiBotToken = await getAntiBotToken()
-      if (!antiBotToken) {
-        alert(lang === 'ko' ? '보안 토큰을 가져오지 못했습니다.' : 'Failed to get security token.')
-        return
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (antiBotToken) {
+        headers['X-AntiBot-Token'] = antiBotToken
       }
-
       const response = await fetch('/api/consult', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-AntiBot-Token': antiBotToken,
-        },
+        headers,
         body: JSON.stringify({ photo, gender, height, weight }),
       })
 
@@ -1785,17 +1774,13 @@ function App() {
 
     try {
       const antiBotToken = await getAntiBotToken()
-      if (!antiBotToken) {
-        setEmailStatus('error')
-        return
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (antiBotToken) {
+        headers['X-AntiBot-Token'] = antiBotToken
       }
-
       const response = await fetch('/api/send-email', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-AntiBot-Token': antiBotToken,
-        },
+        headers,
         body: JSON.stringify({
           email: emailAddress,
           report: report,
@@ -1861,17 +1846,13 @@ Thank you for using StyleAI!`
 
     try {
       const antiBotToken = await getAntiBotToken()
-      if (!antiBotToken) {
-        setEmailStatus('error')
-        return
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (antiBotToken) {
+        headers['X-AntiBot-Token'] = antiBotToken
       }
-
       const response = await fetch('/api/send-email', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-AntiBot-Token': antiBotToken,
-        },
+        headers,
         body: JSON.stringify({
           email: emailAddress,
           report: testReport,

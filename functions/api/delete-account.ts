@@ -38,13 +38,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    if (!context.env.ANTI_BOT_SECRET) {
-      return new Response(JSON.stringify({ error: 'Missing ANTI_BOT_SECRET' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
-    }
-
     const ip = getClientIp(context.request);
     const limiter = rateLimit(`delete-account:${ip}`, 4, 60_000);
     if (!limiter.allowed) {
@@ -59,11 +52,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const antiBotToken = context.request.headers.get('X-AntiBot-Token');
-    if (!antiBotToken || !(await verifyAntiBotToken(context.env.ANTI_BOT_SECRET, ip, antiBotToken))) {
-      return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
+    if (context.env.ANTI_BOT_SECRET) {
+      if (!antiBotToken || !(await verifyAntiBotToken(context.env.ANTI_BOT_SECRET, ip, antiBotToken))) {
+        return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
     }
 
     // Get the authorization header

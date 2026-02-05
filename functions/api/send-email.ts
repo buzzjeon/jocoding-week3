@@ -51,13 +51,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    if (!env.ANTI_BOT_SECRET) {
-      return new Response(JSON.stringify({ error: 'Missing ANTI_BOT_SECRET' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
-    }
-
     const ip = getClientIp(request);
     const limiter = rateLimit(`send-email:${ip}`, 5, 60_000);
     if (!limiter.allowed) {
@@ -72,11 +65,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const antiBotToken = request.headers.get('X-AntiBot-Token');
-    if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
-      return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
+    if (env.ANTI_BOT_SECRET) {
+      if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
+        return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
     }
 
     const { email, report, hairstyleImage, lang } = await request.json();

@@ -46,8 +46,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   if (!env.ANTI_BOT_SECRET) {
-    return new Response(JSON.stringify({ error: 'Missing ANTI_BOT_SECRET' }), {
-      status: 500,
+    return new Response(JSON.stringify({ token: null, expiresAt: 0, disabled: true }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
