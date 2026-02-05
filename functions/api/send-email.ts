@@ -6,7 +6,7 @@ interface Env {
 }
 
 const allowedOrigins = [
-  'https://jocoding-week3.pages.dev',
+  'https://buzzstyle.work',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:4173',
@@ -163,7 +163,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             ${isKorean ? '이 이메일은 StyleAI에서 발송되었습니다.' : 'This email was sent by StyleAI.'}
           </p>
           <p style="color: #666; font-size: 12px; margin-top: 8px;">
-            <a href="https://jocoding-week3.pages.dev" style="color: #13c8ec; text-decoration: none;">
+            <a href="https://buzzstyle.work" style="color: #13c8ec; text-decoration: none;">
               ${isKorean ? '웹사이트 방문하기' : 'Visit our website'}
             </a>
           </p>

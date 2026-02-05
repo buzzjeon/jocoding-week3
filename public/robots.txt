@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://jocoding-week3.pages.dev/sitemap.xml
+Sitemap: https://buzzstyle.work/sitemap.xml
 
 # Crawl-delay (optional, be nice to servers)
 Crawl-delay: 1
