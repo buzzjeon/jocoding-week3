@@ -1,16 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Sora', sans-serif;
   margin: 0;
 }
 
 .glass {
-  background: rgba(28, 37, 39, 0.7);
+  background: rgba(16, 20, 20, 0.72);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+
+.tech-grid {
+  background-image:
+    linear-gradient(rgba(139, 207, 107, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 179, 71, 0.06) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(circle at 40% 20%, rgba(0,0,0,0.9), transparent 60%);
 }

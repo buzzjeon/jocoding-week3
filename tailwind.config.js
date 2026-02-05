@@ -8,12 +8,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        "primary": "#13c8ec",
-        "background-light": "#f6f8f8",
-        "background-dark": "#101f22",
+        "primary": "#8BCF6B",
+        "secondary": "#FFB347",
+        "background-light": "#F7F9F5",
+        "background-dark": "#0B0F10",
+        "surface": "#12181A",
       },
       fontFamily: {
-        "display": ["Manrope", "sans-serif"]
+        "display": ["Sora", "sans-serif"]
       },
     },
   },

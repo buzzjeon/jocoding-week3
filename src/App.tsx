@@ -1935,8 +1935,9 @@ Thank you for using StyleAI!`
       <div className="bg-background-dark text-white font-display min-h-screen relative overflow-hidden">
         {/* Subtle Gradient Background */}
         <div className="fixed inset-0 z-0">
-          <div className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full bg-primary/10 blur-[150px]" />
-          <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-purple-500/10 blur-[120px]" />
+          <div className="absolute inset-0 tech-grid" />
+          <div className="absolute top-0 left-0 w-[520px] h-[520px] rounded-full bg-primary/12 blur-[160px]" />
+          <div className="absolute bottom-0 right-0 w-[420px] h-[420px] rounded-full bg-secondary/12 blur-[140px]" />
         </div>
         {/* Top Navigation */}
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
@@ -2009,7 +2010,10 @@ Thank you for using StyleAI!`
             <div className="relative z-10 flex flex-col gap-4 lg:w-1/2 lg:pr-8 py-12 lg:py-20">
               <span className="text-primary font-bold tracking-widest text-xs uppercase">{t.hero.tagline}</span>
               <h1 className="text-white text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black leading-tight tracking-[-0.03em]">
-                {t.hero.title1} <br />{t.hero.title2}
+                {t.hero.title1} <br />
+                <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  {t.hero.title2}
+                </span>
               </h1>
               <p className="text-white/80 text-lg lg:text-xl font-light leading-relaxed max-w-[400px]">
                 {t.hero.description}
@@ -2149,7 +2153,7 @@ Thank you for using StyleAI!`
 
           {/* Email Test Section */}
           <section className="px-6 py-16 max-w-md mx-auto">
-            <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 border border-primary/20 rounded-2xl p-6 text-center">
+            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-2xl p-6 text-center">
               <span className="material-symbols-outlined text-primary text-4xl mb-4">mail</span>
               <h3 className="text-white text-xl font-bold mb-2">{t.emailTest.title}</h3>
               <p className="text-white/60 text-sm mb-4">{t.emailTest.description}</p>
@@ -2588,7 +2592,7 @@ Thank you for using StyleAI!`
           </section>
 
           {/* Contact Section */}
-          <section className="bg-gradient-to-r from-primary/20 to-purple-500/20 border border-primary/30 rounded-2xl p-8 text-center">
+          <section className="bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30 rounded-2xl p-8 text-center">
             <h2 className="text-white text-2xl font-bold mb-2">{t.about.contact}</h2>
             <p className="text-white/70 mb-4">{t.about.contactText}</p>
             <a href={`mailto:${t.about.contactEmail}`} className="text-primary hover:underline font-medium">{t.about.contactEmail}</a>
@@ -2642,7 +2646,7 @@ Thank you for using StyleAI!`
           </div>
 
           {/* Still Have Questions */}
-          <div className="mt-12 bg-gradient-to-r from-primary/20 to-purple-500/20 border border-primary/30 rounded-2xl p-8 text-center">
+          <div className="mt-12 bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30 rounded-2xl p-8 text-center">
             <h3 className="text-white text-xl font-bold mb-2">{t.faq.stillHaveQuestions}</h3>
             <button
               onClick={() => navigateTo('partnership')}
@@ -3132,7 +3136,7 @@ Thank you for using StyleAI!`
             </div>
 
             {/* Pricing Card */}
-            <div className="bg-gradient-to-br from-primary/20 to-purple-500/20 border border-primary/30 rounded-2xl p-8">
+            <div className="bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30 rounded-2xl p-8">
               <div className="text-center mb-6">
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-white text-5xl font-black">{t.subscription.pricing.price}</span>
