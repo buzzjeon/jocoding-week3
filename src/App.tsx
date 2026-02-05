@@ -273,6 +273,13 @@ For refund-related questions, please contact refunds@styleai.com.
       emailError: 'Failed to send email. Please try again.',
       emailInvalid: 'Please enter a valid email address.',
     },
+    emailTest: {
+      title: 'Test Email Feature',
+      description: 'Enter your email to receive a test message',
+      button: 'Send Test Email',
+      success: 'Test email sent! Check your inbox.',
+      error: 'Failed to send test email.',
+    },
     errors: {
       fillAll: 'Please fill in gender, height, and weight.',
       apiError: 'An error occurred: ',
@@ -636,6 +643,13 @@ StyleAI는 구매 즉시 제공되는 디지털 서비스입니다. AI가 생성
       emailSuccess: '이메일이 전송되었습니다!',
       emailError: '이메일 전송에 실패했습니다. 다시 시도해주세요.',
       emailInvalid: '유효한 이메일 주소를 입력해주세요.',
+    },
+    emailTest: {
+      title: '이메일 기능 테스트',
+      description: '테스트 메일을 받을 이메일 주소를 입력하세요',
+      button: '테스트 이메일 전송',
+      success: '테스트 이메일이 전송되었습니다! 받은 편지함을 확인하세요.',
+      error: '테스트 이메일 전송에 실패했습니다.',
     },
     errors: {
       fillAll: '성별, 키, 몸무게를 모두 입력해주세요.',
@@ -1214,6 +1228,7 @@ function App() {
   const [emailAddress, setEmailAddress] = useState('')
   const [emailSending, setEmailSending] = useState(false)
   const [emailStatus, setEmailStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [isTestEmail, setIsTestEmail] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const resultRef = useRef<HTMLDivElement>(null)
 
@@ -1688,6 +1703,75 @@ function App() {
     }
   }
 
+  const handleSendTestEmail = async () => {
+    // 이메일 유효성 검사
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailAddress || !emailRegex.test(emailAddress)) {
+      setEmailStatus('error')
+      return
+    }
+
+    setEmailSending(true)
+    setEmailStatus('idle')
+
+    const testReport = lang === 'ko'
+      ? `**테스트 이메일입니다**
+
+이 이메일은 StyleAI의 이메일 기능 테스트를 위해 전송되었습니다.
+
+**이메일 기능이 정상적으로 동작합니다!**
+
+- 스타일 분석 결과를 이메일로 받을 수 있습니다
+- 분석 후 결과 페이지에서 이메일 버튼을 클릭하세요
+- 이메일 주소를 입력하면 스타일 리포트가 전송됩니다
+
+StyleAI를 이용해 주셔서 감사합니다!`
+      : `**This is a test email**
+
+This email was sent to test StyleAI's email functionality.
+
+**Email feature is working correctly!**
+
+- You can receive style analysis results via email
+- Click the email button on the results page after analysis
+- Enter your email address to receive your style report
+
+Thank you for using StyleAI!`
+
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: emailAddress,
+          report: testReport,
+          hairstyleImage: null,
+          lang: lang,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setEmailStatus('success')
+        setTimeout(() => {
+          setShowEmailModal(false)
+          setEmailAddress('')
+          setEmailStatus('idle')
+        }, 3000)
+      } else {
+        setEmailStatus('error')
+      }
+    } catch (error) {
+      console.error('Test email send failed:', error)
+      setEmailStatus('error')
+    } finally {
+      setEmailSending(false)
+    }
+  }
+
   // Language Selector Component
   const LanguageSelector = () => (
     <div className="relative">
@@ -1935,6 +2019,25 @@ function App() {
             </div>
           </section>
 
+          {/* Email Test Section */}
+          <section className="px-6 py-16 max-w-md mx-auto">
+            <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 border border-primary/20 rounded-2xl p-6 text-center">
+              <span className="material-symbols-outlined text-primary text-4xl mb-4">mail</span>
+              <h3 className="text-white text-xl font-bold mb-2">{t.emailTest.title}</h3>
+              <p className="text-white/60 text-sm mb-4">{t.emailTest.description}</p>
+              <button
+                onClick={() => {
+                  setIsTestEmail(true)
+                  setShowEmailModal(true)
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl h-12 px-6 bg-primary text-background-dark font-bold hover:brightness-110 transition-all"
+              >
+                <span className="material-symbols-outlined text-[20px]">send</span>
+                {t.emailTest.button}
+              </button>
+            </div>
+          </section>
+
           {/* Comments Section */}
           <section className="px-6 py-16 max-w-4xl mx-auto">
             <h2 className="text-white text-2xl lg:text-3xl font-extrabold tracking-tight text-center mb-8">
@@ -1983,6 +2086,78 @@ function App() {
             </div>
           </div>
         </div>
+
+        {/* Email Modal */}
+        {showEmailModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="bg-background-dark border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-white text-xl font-bold">
+                  {isTestEmail ? t.emailTest.title : t.result.emailModalTitle}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowEmailModal(false)
+                    setEmailAddress('')
+                    setEmailStatus('idle')
+                    setIsTestEmail(false)
+                  }}
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <input
+                  type="email"
+                  value={emailAddress}
+                  onChange={(e) => {
+                    setEmailAddress(e.target.value)
+                    setEmailStatus('idle')
+                  }}
+                  placeholder={t.result.emailPlaceholder}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary/50 transition-colors"
+                  disabled={emailSending}
+                />
+
+                {emailStatus === 'success' && (
+                  <div className="flex items-center gap-2 text-green-400 text-sm">
+                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                    {isTestEmail ? t.emailTest.success : t.result.emailSuccess}
+                  </div>
+                )}
+
+                {emailStatus === 'error' && (
+                  <div className="flex items-center gap-2 text-red-400 text-sm">
+                    <span className="material-symbols-outlined text-[18px]">error</span>
+                    {emailAddress && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAddress)
+                      ? t.result.emailInvalid
+                      : (isTestEmail ? t.emailTest.error : t.result.emailError)}
+                  </div>
+                )}
+
+                <button
+                  onClick={isTestEmail ? handleSendTestEmail : handleSendEmail}
+                  disabled={emailSending || !emailAddress}
+                  className="w-full py-3 rounded-xl bg-primary text-background-dark font-bold hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {emailSending ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                      {t.result.emailSending}
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[20px]">send</span>
+                      {t.result.emailSend}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -3139,7 +3314,10 @@ function App() {
               )}
             </button>
             <button
-              onClick={() => setShowEmailModal(true)}
+              onClick={() => {
+                setIsTestEmail(false)
+                setShowEmailModal(true)
+              }}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/20 hover:bg-primary/30 transition-colors text-primary text-sm font-medium"
             >
               <span className="material-symbols-outlined text-[20px]">mail</span>
@@ -3215,12 +3393,15 @@ function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="bg-background-dark border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-white text-xl font-bold">{t.result.emailModalTitle}</h3>
+              <h3 className="text-white text-xl font-bold">
+                {isTestEmail ? t.emailTest.title : t.result.emailModalTitle}
+              </h3>
               <button
                 onClick={() => {
                   setShowEmailModal(false)
                   setEmailAddress('')
                   setEmailStatus('idle')
+                  setIsTestEmail(false)
                 }}
                 className="text-white/60 hover:text-white transition-colors"
               >
@@ -3244,7 +3425,7 @@ function App() {
               {emailStatus === 'success' && (
                 <div className="flex items-center gap-2 text-green-400 text-sm">
                   <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                  {t.result.emailSuccess}
+                  {isTestEmail ? t.emailTest.success : t.result.emailSuccess}
                 </div>
               )}
 
@@ -3253,12 +3434,12 @@ function App() {
                   <span className="material-symbols-outlined text-[18px]">error</span>
                   {emailAddress && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAddress)
                     ? t.result.emailInvalid
-                    : t.result.emailError}
+                    : (isTestEmail ? t.emailTest.error : t.result.emailError)}
                 </div>
               )}
 
               <button
-                onClick={handleSendEmail}
+                onClick={isTestEmail ? handleSendTestEmail : handleSendEmail}
                 disabled={emailSending || !emailAddress}
                 className="w-full py-3 rounded-xl bg-primary text-background-dark font-bold hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
