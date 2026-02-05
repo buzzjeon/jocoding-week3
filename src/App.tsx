@@ -1284,6 +1284,7 @@ function App() {
   const [emailAddress, setEmailAddress] = useState('')
   const [emailSending, setEmailSending] = useState(false)
   const [emailStatus, setEmailStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [emailErrorMessage, setEmailErrorMessage] = useState('')
   const [isTestEmail, setIsTestEmail] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const resultRef = useRef<HTMLDivElement>(null)
@@ -1799,11 +1800,13 @@ function App() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailAddress || !emailRegex.test(emailAddress)) {
       setEmailStatus('error')
+      setEmailErrorMessage(t.result.emailInvalid)
       return
     }
 
     setEmailSending(true)
     setEmailStatus('idle')
+    setEmailErrorMessage('')
 
     try {
       const antiBotToken = await getAntiBotToken()
@@ -1830,13 +1833,16 @@ function App() {
           setShowEmailModal(false)
           setEmailAddress('')
           setEmailStatus('idle')
+          setEmailErrorMessage('')
         }, 2000)
       } else {
         setEmailStatus('error')
+        setEmailErrorMessage(data?.error || t.result.emailError)
       }
     } catch (error) {
       console.error('Email send failed:', error)
       setEmailStatus('error')
+      setEmailErrorMessage(t.result.emailError)
     } finally {
       setEmailSending(false)
     }
@@ -1847,11 +1853,13 @@ function App() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailAddress || !emailRegex.test(emailAddress)) {
       setEmailStatus('error')
+      setEmailErrorMessage(t.result.emailInvalid)
       return
     }
 
     setEmailSending(true)
     setEmailStatus('idle')
+    setEmailErrorMessage('')
 
     const testReport = lang === 'ko'
       ? `**테스트 이메일입니다**
@@ -1902,13 +1910,16 @@ Thank you for using StyleAI!`
           setShowEmailModal(false)
           setEmailAddress('')
           setEmailStatus('idle')
+          setEmailErrorMessage('')
         }, 3000)
       } else {
         setEmailStatus('error')
+        setEmailErrorMessage(data?.error || t.emailTest.error)
       }
     } catch (error) {
       console.error('Test email send failed:', error)
       setEmailStatus('error')
+      setEmailErrorMessage(t.emailTest.error)
     } finally {
       setEmailSending(false)
     }
@@ -1918,6 +1929,7 @@ Thank you for using StyleAI!`
     setIsTestEmail(testMode)
     setShowEmailModal(true)
     setEmailStatus('idle')
+    setEmailErrorMessage('')
   }
 
   const EmailPanel = () => (
@@ -1947,6 +1959,7 @@ Thank you for using StyleAI!`
             onChange={(e) => {
               setEmailAddress(e.target.value)
               setEmailStatus('idle')
+              setEmailErrorMessage('')
             }}
             placeholder={t.result.emailPlaceholder}
             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary/50 transition-colors"
@@ -1963,9 +1976,7 @@ Thank you for using StyleAI!`
           {emailStatus === 'error' && (
             <div className="flex items-center gap-2 text-red-400 text-sm">
               <span className="material-symbols-outlined text-[18px]">error</span>
-              {emailAddress && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAddress)
-                ? t.result.emailInvalid
-                : (isTestEmail ? t.emailTest.error : t.result.emailError)}
+              {emailErrorMessage || (isTestEmail ? t.emailTest.error : t.result.emailError)}
             </div>
           )}
 
@@ -3536,77 +3547,7 @@ Thank you for using StyleAI!`
         </div>
       </main>
 
-      {/* Email Modal */}
-      {showEmailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-background-dark border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-white text-xl font-bold">
-                {isTestEmail ? t.emailTest.title : t.result.emailModalTitle}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowEmailModal(false)
-                  setEmailAddress('')
-                  setEmailStatus('idle')
-                  setIsTestEmail(false)
-                }}
-                className="text-white/60 hover:text-white transition-colors"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <input
-                type="email"
-                value={emailAddress}
-                onChange={(e) => {
-                  setEmailAddress(e.target.value)
-                  setEmailStatus('idle')
-                }}
-                placeholder={t.result.emailPlaceholder}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary/50 transition-colors"
-                disabled={emailSending}
-              />
-
-              {emailStatus === 'success' && (
-                <div className="flex items-center gap-2 text-green-400 text-sm">
-                  <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                  {isTestEmail ? t.emailTest.success : t.result.emailSuccess}
-                </div>
-              )}
-
-              {emailStatus === 'error' && (
-                <div className="flex items-center gap-2 text-red-400 text-sm">
-                  <span className="material-symbols-outlined text-[18px]">error</span>
-                  {emailAddress && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAddress)
-                    ? t.result.emailInvalid
-                    : (isTestEmail ? t.emailTest.error : t.result.emailError)}
-                </div>
-              )}
-
-              <button
-                onClick={isTestEmail ? handleSendTestEmail : handleSendEmail}
-                disabled={emailSending || !emailAddress}
-                className="w-full py-3 rounded-xl bg-primary text-background-dark font-bold hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {emailSending ? (
-                  <>
-                    <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
-                    {t.result.emailSending}
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-[20px]">send</span>
-                    {t.result.emailSend}
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showEmailModal && <EmailPanel />}
     </div>
   )
 }
