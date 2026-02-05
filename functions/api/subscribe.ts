@@ -1,17 +1,70 @@
+import { getClientIp, rateLimit, verifyAntiBotToken } from './_antibot';
+
 interface Env {
   POLAR_ACCESS_TOKEN: string;
+  ANTI_BOT_SECRET: string;
 }
+
+const allowedOrigins = [
+  'https://jocoding-week3.pages.dev',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  if (!origin || !allowedOrigins.includes(origin)) {
+    return null;
+  }
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-AntiBot-Token',
+    'Vary': 'Origin',
+  };
+};
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
-
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  };
+  const origin = request.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
+  if (!corsHeaders) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
+    if (!env.ANTI_BOT_SECRET) {
+      return new Response(JSON.stringify({ error: 'Missing ANTI_BOT_SECRET' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const ip = getClientIp(request);
+    const limiter = rateLimit(`subscribe:${ip}`, 6, 60_000);
+    if (!limiter.allowed) {
+      return new Response(JSON.stringify({ error: 'Too many requests', retryAfter: limiter.retryAfter }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(limiter.retryAfter),
+          ...corsHeaders,
+        },
+      });
+    }
+
+    const antiBotToken = request.headers.get('X-AntiBot-Token');
+    if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
+      return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
     const body = await request.json().catch(() => ({})) as {
       origin?: string;
       userId?: string;
@@ -19,7 +72,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     };
 
     const origin = body.origin || new URL(request.url).origin;
-    const successUrl = `${origin}/?subscription=success`;
+    const successUrl = `${origin}/subscription-success`;
 
     // StyleAI Daily Premium subscription product ID
     const SUBSCRIPTION_PRODUCT_ID = '50ac0439-8520-47e8-a496-25a96d7a56b3';
@@ -77,12 +130,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 };
 
-export const onRequestOptions: PagesFunction = async () => {
+export const onRequestOptions: PagesFunction = async (context) => {
+  const origin = context.request.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
+  if (!corsHeaders) {
+    return new Response('Origin not allowed', { status: 403 });
+  }
   return new Response(null, {
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      ...corsHeaders,
     },
   });
 };

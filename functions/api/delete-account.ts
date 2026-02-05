@@ -1,16 +1,70 @@
+import { getClientIp, rateLimit, verifyAntiBotToken } from './_antibot';
+
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  ANTI_BOT_SECRET: string;
 }
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+const allowedOrigins = [
+  'https://jocoding-week3.pages.dev',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  if (!origin || !allowedOrigins.includes(origin)) {
+    return null;
+  }
+  return {
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-AntiBot-Token',
+    'Vary': 'Origin',
   };
+};
+
+export const onRequestPost: PagesFunction<Env> = async (context) => {
+  const origin = context.request.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
+  if (!corsHeaders) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
+    if (!context.env.ANTI_BOT_SECRET) {
+      return new Response(JSON.stringify({ error: 'Missing ANTI_BOT_SECRET' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const ip = getClientIp(context.request);
+    const limiter = rateLimit(`delete-account:${ip}`, 4, 60_000);
+    if (!limiter.allowed) {
+      return new Response(JSON.stringify({ error: 'Too many requests', retryAfter: limiter.retryAfter }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(limiter.retryAfter),
+          ...corsHeaders,
+        },
+      });
+    }
+
+    const antiBotToken = context.request.headers.get('X-AntiBot-Token');
+    if (!antiBotToken || !(await verifyAntiBotToken(context.env.ANTI_BOT_SECRET, ip, antiBotToken))) {
+      return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
     // Get the authorization header
     const authHeader = context.request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -84,12 +138,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 };
 
-export const onRequestOptions: PagesFunction = async () => {
+export const onRequestOptions: PagesFunction = async (context) => {
+  const origin = context.request.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
+  if (!corsHeaders) {
+    return new Response('Origin not allowed', { status: 403 });
+  }
   return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
+    headers: corsHeaders,
   });
 };

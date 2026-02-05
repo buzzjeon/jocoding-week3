@@ -1,10 +1,37 @@
 import { useState, useRef, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import html2canvas from 'html2canvas'
 import { supabase } from './lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
 type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup' | 'mypage' | 'forgot-password' | 'reset-password' | 'subscription' | 'subscription-success' | 'partnership' | 'animal-test' | 'about' | 'faq'
 type Language = 'en' | 'ko'
+
+const pageRoutes: Record<Page, string> = {
+  landing: '/',
+  form: '/form',
+  result: '/result',
+  'payment-success': '/payment-success',
+  terms: '/terms',
+  privacy: '/privacy',
+  refund: '/refund',
+  login: '/login',
+  signup: '/signup',
+  mypage: '/mypage',
+  'forgot-password': '/forgot-password',
+  'reset-password': '/reset-password',
+  subscription: '/subscription',
+  'subscription-success': '/subscription-success',
+  partnership: '/partnership',
+  'animal-test': '/animal-test',
+  about: '/about',
+  faq: '/faq',
+}
+
+const routeToPage: Record<string, Page> = Object.entries(pageRoutes).reduce((acc, [page, path]) => {
+  acc[path] = page as Page
+  return acc
+}, {} as Record<string, Page>)
 
 const translations = {
   en: {
@@ -133,7 +160,7 @@ const translations = {
     },
     terms: {
       title: 'Terms of Service',
-      lastUpdated: 'Last Updated: January 2024',
+      lastUpdated: 'Last Updated: February 5, 2026',
       content: `
 1. Acceptance of Terms
 By accessing and using StyleAI ("Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our Service.
@@ -156,16 +183,19 @@ StyleAI provides recommendations for informational purposes only. We are not res
 6. Payment Terms
 Premium services are billed through our payment processor Polar. All sales are final except as described in our Refund Policy.
 
-7. Changes to Terms
+7. Third-Party Services and Tracking
+We use third-party services to provide core functionality, analytics, comments, and advertising. These services may collect data as described in our Privacy Policy, including OpenAI, Supabase, Resend, Disqus, Google Analytics, Microsoft Clarity, Google AdSense, Formspree, Polar, and Cloudflare.
+
+8. Changes to Terms
 We reserve the right to modify these terms at any time. Continued use of the Service after changes constitutes acceptance of the new terms.
 
-8. Contact
+9. Contact
 For questions about these Terms, please contact us at support@styleai.com.
       `,
     },
     privacy: {
       title: 'Privacy Policy',
-      lastUpdated: 'Last Updated: January 2024',
+      lastUpdated: 'Last Updated: February 5, 2026',
       content: `
 1. Information We Collect
 - Personal information: gender, height, weight
@@ -187,6 +217,13 @@ For questions about these Terms, please contact us at support@styleai.com.
 4. Third-Party Services
 We use the following third-party services:
 - OpenAI: For AI-powered style analysis
+- Supabase: For authentication and user management
+- Resend: For transactional email delivery
+- Disqus: For comments and community feedback
+- Google Analytics: For usage analytics
+- Microsoft Clarity: For session insights
+- Google AdSense: For advertising
+- Formspree: For partnership inquiry submissions
 - Polar: For payment processing
 - Cloudflare: For hosting and security
 
@@ -209,7 +246,7 @@ For privacy-related inquiries, please contact us at privacy@styleai.com.
     },
     refund: {
       title: 'Refund Policy',
-      lastUpdated: 'Last Updated: January 2024',
+      lastUpdated: 'Last Updated: February 5, 2026',
       content: `
 1. Digital Product Nature
 StyleAI provides digital services that are delivered immediately upon purchase. Due to the instant delivery nature of our AI-generated reports, we have a limited refund policy.
@@ -504,7 +541,7 @@ For refund-related questions, please contact refunds@styleai.com.
     },
     terms: {
       title: '이용약관',
-      lastUpdated: '최종 수정일: 2024년 1월',
+      lastUpdated: '최종 수정일: 2026년 2월 5일',
       content: `
 1. 약관의 동의
 StyleAI("서비스")에 접속하고 이용함으로써 귀하는 본 이용약관에 동의하게 됩니다. 본 약관에 동의하지 않으시면 서비스를 이용하지 마십시오.
@@ -527,16 +564,19 @@ StyleAI는 정보 제공 목적으로만 추천을 제공합니다. 당사의 �
 6. 결제 조건
 프리미엄 서비스는 결제 처리업체 Polar를 통해 청구됩니다. 환불 정책에 설명된 경우를 제외하고 모든 판매는 최종적입니다.
 
-7. 약관 변경
+7. 제3자 서비스 및 추적
+서비스 제공을 위해 제3자 서비스를 사용합니다. OpenAI, Supabase, Resend, Disqus, Google Analytics, Microsoft Clarity, Google AdSense, Formspree, Polar, Cloudflare 등이 포함되며, 자세한 내용은 개인정보처리방침을 참고하세요.
+
+8. 약관 변경
 당사는 언제든지 본 약관을 수정할 권리를 보유합니다. 변경 후 서비스를 계속 이용하면 새로운 약관에 동의한 것으로 간주됩니다.
 
-8. 문의
+9. 문의
 본 약관에 관한 질문은 support@styleai.com으로 문의해 주세요.
       `,
     },
     privacy: {
       title: '개인정보처리방침',
-      lastUpdated: '최종 수정일: 2024년 1월',
+      lastUpdated: '최종 수정일: 2026년 2월 5일',
       content: `
 1. 수집하는 정보
 - 개인정보: 성별, 키, 몸무게
@@ -558,6 +598,13 @@ StyleAI는 정보 제공 목적으로만 추천을 제공합니다. 당사의 �
 4. 제3자 서비스
 다음 제3자 서비스를 사용합니다:
 - OpenAI: AI 기반 스타일 분석
+- Supabase: 인증 및 사용자 관리
+- Resend: 트랜잭션 이메일 전송
+- Disqus: 댓글 및 커뮤니티 피드백
+- Google Analytics: 사용 분석
+- Microsoft Clarity: 세션 인사이트
+- Google AdSense: 광고
+- Formspree: 제휴 문의 접수
 - Polar: 결제 처리
 - Cloudflare: 호스팅 및 보안
 
@@ -580,7 +627,7 @@ StyleAI는 정보 제공 목적으로만 추천을 제공합니다. 당사의 �
     },
     refund: {
       title: '환불정책',
-      lastUpdated: '최종 수정일: 2024년 1월',
+      lastUpdated: '최종 수정일: 2026년 2월 5일',
       content: `
 1. 디지털 상품의 특성
 StyleAI는 구매 즉시 제공되는 디지털 서비스입니다. AI가 생성한 리포트의 즉시 제공 특성으로 인해 제한된 환불 정책을 운영합니다.
@@ -909,11 +956,11 @@ function DisqusComments({ pageIdentifier, pageUrl }: { pageIdentifier: string; p
 interface AnimalTestPageProps {
   t: typeof translations.en
   lang: Language
-  setPage: (page: Page) => void
+  navigateTo: (page: Page) => void
   LanguageSelector: () => React.ReactNode
 }
 
-function AnimalTestPage({ t, lang, setPage, LanguageSelector }: AnimalTestPageProps) {
+function AnimalTestPage({ t, lang, navigateTo, LanguageSelector }: AnimalTestPageProps) {
   const [testPhoto, setTestPhoto] = useState<string | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [result, setResult] = useState<{ className: string; probability: number } | null>(null)
@@ -1065,7 +1112,7 @@ function AnimalTestPage({ t, lang, setPage, LanguageSelector }: AnimalTestPagePr
     <div className="bg-background-dark text-white font-display min-h-screen">
       <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
         <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-          <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+          <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
             <span className="material-symbols-outlined text-[24px]">arrow_back</span>
           </button>
           <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -1199,7 +1246,7 @@ function AnimalTestPage({ t, lang, setPage, LanguageSelector }: AnimalTestPagePr
                 {t.animalTest.tryAgain}
               </button>
               <button
-                onClick={() => setPage('landing')}
+                onClick={() => navigateTo('landing')}
                 className="flex-1 flex items-center justify-center rounded-xl h-14 bg-white/5 border border-white/10 text-white text-lg font-medium tracking-tight hover:bg-white/10 transition-all"
               >
                 {t.animalTest.backToResult}
@@ -1213,7 +1260,16 @@ function AnimalTestPage({ t, lang, setPage, LanguageSelector }: AnimalTestPagePr
 }
 
 function App() {
-  const [page, setPage] = useState<Page>('landing')
+  const navigate = useNavigate()
+  const location = useLocation()
+  const normalizedPath = location.pathname.replace(/\/+$/, '') || '/'
+  const page = routeToPage[normalizedPath] || 'landing'
+
+  const navigateTo = (nextPage: Page, replace = false) => {
+    const path = pageRoutes[nextPage]
+    navigate(path, { replace })
+  }
+
   const [lang, setLang] = useState<Language>('ko')
   const [photo, setPhoto] = useState<string | null>(null)
   const [gender, setGender] = useState('')
@@ -1247,8 +1303,15 @@ function App() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [mypageError, setMypageError] = useState('')
   const [mypageSuccess, setMypageSuccess] = useState('')
+  const antiBotTokenRef = useRef<{ token: string; expiresAt: number } | null>(null)
 
   const t = translations[lang]
+
+  useEffect(() => {
+    if (!routeToPage[normalizedPath]) {
+      navigateTo('landing', true)
+    }
+  }, [normalizedPath])
 
   // Check auth state on load
   useEffect(() => {
@@ -1263,7 +1326,7 @@ function App() {
       setUser(session?.user ?? null)
       // Handle password recovery
       if (event === 'PASSWORD_RECOVERY') {
-        setPage('reset-password')
+        navigateTo('reset-password')
       }
     })
 
@@ -1272,20 +1335,45 @@ function App() {
 
   // Check for payment/subscription success on load
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
+    const params = new URLSearchParams(location.search)
+    const legacyPage = params.get('page') as Page | null
+    if (legacyPage && pageRoutes[legacyPage]) {
+      navigateTo(legacyPage, true)
+      return
+    }
     if (params.get('payment') === 'success') {
-      setPage('payment-success')
-      window.history.replaceState({}, '', window.location.pathname)
+      navigateTo('payment-success', true)
     }
     if (params.get('subscription') === 'success') {
-      setPage('subscription-success')
-      window.history.replaceState({}, '', window.location.pathname)
+      navigateTo('subscription-success', true)
     }
-  }, [])
+  }, [location.search])
 
   const toggleLanguage = () => {
     setLang(lang === 'en' ? 'ko' : 'en')
     setShowLangMenu(false)
+  }
+
+  const getAntiBotToken = async () => {
+    const cached = antiBotTokenRef.current
+    if (cached && cached.expiresAt > Date.now() + 30_000) {
+      return cached.token
+    }
+
+    try {
+      const response = await fetch('/api/request-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await response.json()
+      if (!response.ok || !data?.token || !data?.expiresAt) {
+        return null
+      }
+      antiBotTokenRef.current = { token: data.token, expiresAt: data.expiresAt }
+      return data.token as string
+    } catch {
+      return null
+    }
   }
 
   // Auth handlers
@@ -1313,7 +1401,7 @@ function App() {
     } else {
       setAuthEmail('')
       setAuthPassword('')
-      setPage('landing')
+      navigateTo('landing')
     }
     setLoading(false)
   }
@@ -1352,7 +1440,7 @@ function App() {
       setAuthEmail('')
       setAuthPassword('')
       setAuthConfirmPassword('')
-      setPage('login')
+      navigateTo('login')
     }
     setLoading(false)
   }
@@ -1360,7 +1448,7 @@ function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     setShowUserMenu(false)
-    setPage('landing')
+    navigateTo('landing')
   }
 
   const handleGoogleLogin = async () => {
@@ -1395,7 +1483,7 @@ function App() {
     } else {
       alert(t.auth.resetLinkSent)
       setAuthEmail('')
-      setPage('login')
+      navigateTo('login')
     }
     setLoading(false)
   }
@@ -1429,7 +1517,7 @@ function App() {
       alert(t.auth.passwordResetSuccess)
       setAuthPassword('')
       setAuthConfirmPassword('')
-      setPage('landing')
+      navigateTo('landing')
     }
     setLoading(false)
   }
@@ -1488,12 +1576,20 @@ function App() {
         return
       }
 
+      const antiBotToken = await getAntiBotToken()
+      if (!antiBotToken) {
+        setMypageError(lang === 'ko' ? '보안 토큰을 가져오지 못했습니다.' : 'Failed to get security token.')
+        setLoading(false)
+        return
+      }
+
       // Call delete account API
       const response = await fetch('/api/delete-account', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
+          'X-AntiBot-Token': antiBotToken,
         },
       })
 
@@ -1508,7 +1604,7 @@ function App() {
       // Sign out after successful deletion
       await supabase.auth.signOut()
       alert(t.mypage.accountDeleted)
-      setPage('landing')
+      navigateTo('landing')
     } catch (err) {
       setMypageError('An error occurred while deleting account')
     }
@@ -1518,15 +1614,24 @@ function App() {
   // Subscription handler
   const handleSubscribe = async () => {
     if (!user) {
-      setPage('login')
+      navigateTo('login')
       return
     }
 
     setLoading(true)
     try {
+      const antiBotToken = await getAntiBotToken()
+      if (!antiBotToken) {
+        alert(lang === 'ko' ? '보안 토큰을 가져오지 못했습니다.' : 'Failed to get security token.')
+        return
+      }
+
       const response = await fetch('/api/subscribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-AntiBot-Token': antiBotToken,
+        },
         body: JSON.stringify({
           origin: window.location.origin,
           userId: user.id,
@@ -1558,7 +1663,7 @@ function App() {
     setNewPassword('')
     setConfirmNewPassword('')
     setDeleteConfirmText('')
-    setPage('mypage')
+    navigateTo('mypage')
   }
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1585,9 +1690,18 @@ function App() {
     setHairstyleImage(null)
 
     try {
+      const antiBotToken = await getAntiBotToken()
+      if (!antiBotToken) {
+        alert(lang === 'ko' ? '보안 토큰을 가져오지 못했습니다.' : 'Failed to get security token.')
+        return
+      }
+
       const response = await fetch('/api/consult', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-AntiBot-Token': antiBotToken,
+        },
         body: JSON.stringify({ photo, gender, height, weight }),
       })
 
@@ -1600,7 +1714,7 @@ function App() {
         if (data.hairstyleImage) {
           setHairstyleImage(data.hairstyleImage)
         }
-        setPage('result')
+        navigateTo('result')
       }
     } catch {
       alert(t.errors.connectionFailed)
@@ -1612,7 +1726,7 @@ function App() {
   const handleReset = () => {
     setReport('')
     setHairstyleImage(null)
-    setPage('form')
+    navigateTo('form')
   }
 
   const handleDownload = async () => {
@@ -1670,10 +1784,17 @@ function App() {
     setEmailStatus('idle')
 
     try {
+      const antiBotToken = await getAntiBotToken()
+      if (!antiBotToken) {
+        setEmailStatus('error')
+        return
+      }
+
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-AntiBot-Token': antiBotToken,
         },
         body: JSON.stringify({
           email: emailAddress,
@@ -1739,10 +1860,17 @@ This email was sent to test StyleAI's email functionality.
 Thank you for using StyleAI!`
 
     try {
+      const antiBotToken = await getAntiBotToken()
+      if (!antiBotToken) {
+        setEmailStatus('error')
+        return
+      }
+
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-AntiBot-Token': antiBotToken,
         },
         body: JSON.stringify({
           email: emailAddress,
@@ -1863,7 +1991,7 @@ Thank you for using StyleAI!`
                 </div>
               ) : (
                 <button
-                  onClick={() => setPage('login')}
+                  onClick={() => navigateTo('login')}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/20 hover:bg-primary/30 transition-colors text-primary font-medium text-sm"
                 >
                   <span className="material-symbols-outlined text-[20px]">login</span>
@@ -1888,7 +2016,7 @@ Thank you for using StyleAI!`
               </p>
               <div className="mt-4 flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={() => setPage('form')}
+                  onClick={() => navigateTo('form')}
                   className="flex items-center justify-center rounded-xl h-14 px-8 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20"
                 >
                   {t.hero.cta}
@@ -1999,7 +2127,7 @@ Thank you for using StyleAI!`
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
               <div className="flex flex-col gap-2 items-center">
                 <button
-                  onClick={() => setPage('form')}
+                  onClick={() => navigateTo('form')}
                   className="w-full sm:w-auto flex items-center justify-center rounded-xl h-14 px-12 bg-white/10 border border-white/20 text-white text-lg font-bold tracking-tight hover:bg-white/20 transition-all"
                 >
                   {t.cta.button}
@@ -2008,7 +2136,7 @@ Thank you for using StyleAI!`
               </div>
               <div className="flex flex-col gap-2 items-center">
                 <button
-                  onClick={() => setPage('subscription')}
+                  onClick={() => navigateTo('subscription')}
                   className="w-full sm:w-auto flex items-center justify-center rounded-xl h-14 px-12 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 transition-all shadow-lg shadow-primary/20"
                 >
                   <span className="material-symbols-outlined mr-2">workspace_premium</span>
@@ -2054,12 +2182,12 @@ Thank you for using StyleAI!`
               <span className="material-symbols-outlined hover:text-primary cursor-pointer transition-colors">mail</span>
             </div>
             <div className="flex justify-center gap-6 mb-6 text-sm flex-wrap">
-              <button onClick={() => setPage('about')} className="text-white/40 hover:text-white transition-colors">{t.footer.about}</button>
-              <button onClick={() => setPage('faq')} className="text-white/40 hover:text-white transition-colors">{t.footer.faq}</button>
-              <button onClick={() => setPage('terms')} className="text-white/40 hover:text-white transition-colors">{t.footer.terms}</button>
-              <button onClick={() => setPage('privacy')} className="text-white/40 hover:text-white transition-colors">{t.footer.privacy}</button>
-              <button onClick={() => setPage('refund')} className="text-white/40 hover:text-white transition-colors">{t.footer.refund}</button>
-              <button onClick={() => setPage('partnership')} className="text-white/40 hover:text-white transition-colors">{t.footer.partnership}</button>
+              <button onClick={() => navigateTo('about')} className="text-white/40 hover:text-white transition-colors">{t.footer.about}</button>
+              <button onClick={() => navigateTo('faq')} className="text-white/40 hover:text-white transition-colors">{t.footer.faq}</button>
+              <button onClick={() => navigateTo('terms')} className="text-white/40 hover:text-white transition-colors">{t.footer.terms}</button>
+              <button onClick={() => navigateTo('privacy')} className="text-white/40 hover:text-white transition-colors">{t.footer.privacy}</button>
+              <button onClick={() => navigateTo('refund')} className="text-white/40 hover:text-white transition-colors">{t.footer.refund}</button>
+              <button onClick={() => navigateTo('partnership')} className="text-white/40 hover:text-white transition-colors">{t.footer.partnership}</button>
             </div>
             <p className="text-white/20 text-xs tracking-wider">{t.footer.copyright}</p>
           </footer>
@@ -2169,7 +2297,7 @@ Thank you for using StyleAI!`
         {/* Top Navigation */}
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -2299,7 +2427,7 @@ Thank you for using StyleAI!`
     <div className="bg-background-dark text-white font-display min-h-screen">
       <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
         <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-          <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+          <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
             <span className="material-symbols-outlined text-[24px]">arrow_back</span>
           </button>
           <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -2327,7 +2455,7 @@ Thank you for using StyleAI!`
 
         <div className="mt-8 text-center">
           <button
-            onClick={() => setPage('landing')}
+            onClick={() => navigateTo('landing')}
             className="px-8 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white font-medium"
           >
             {t.result.backHome}
@@ -2358,7 +2486,7 @@ Thank you for using StyleAI!`
       <div className="bg-background-dark text-white font-display min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -2384,7 +2512,7 @@ Thank you for using StyleAI!`
       <div className="bg-background-dark text-white font-display min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -2476,7 +2604,7 @@ Thank you for using StyleAI!`
       <div className="bg-background-dark text-white font-display min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -2517,7 +2645,7 @@ Thank you for using StyleAI!`
           <div className="mt-12 bg-gradient-to-r from-primary/20 to-purple-500/20 border border-primary/30 rounded-2xl p-8 text-center">
             <h3 className="text-white text-xl font-bold mb-2">{t.faq.stillHaveQuestions}</h3>
             <button
-              onClick={() => setPage('partnership')}
+              onClick={() => navigateTo('partnership')}
               className="text-primary hover:underline font-medium"
             >
               {t.faq.contactUs} →
@@ -2530,7 +2658,7 @@ Thank you for using StyleAI!`
 
   // Animal Test Page
   if (page === 'animal-test') {
-    return <AnimalTestPage t={t} lang={lang} setPage={setPage} LanguageSelector={LanguageSelector} />
+    return <AnimalTestPage t={t} lang={lang} navigateTo={navigateTo} LanguageSelector={LanguageSelector} />
   }
 
   // Payment Success Page
@@ -2540,7 +2668,7 @@ Thank you for using StyleAI!`
         {/* Top Navigation */}
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -2561,7 +2689,7 @@ Thank you for using StyleAI!`
             <p className="text-white/60 lg:text-lg mb-8 max-w-md">{t.paymentSuccess.description}</p>
 
             <button
-              onClick={() => setPage('form')}
+              onClick={() => navigateTo('form')}
               className="flex items-center justify-center rounded-xl h-14 px-12 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 mx-auto"
             >
               <span className="material-symbols-outlined mr-2">auto_awesome</span>
@@ -2579,7 +2707,7 @@ Thank you for using StyleAI!`
       <div className="bg-background-dark text-white font-display min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -2628,7 +2756,7 @@ Thank you for using StyleAI!`
                 />
                 <button
                   type="button"
-                  onClick={() => { setPage('forgot-password'); setAuthError('') }}
+                  onClick={() => { navigateTo('forgot-password'); setAuthError('') }}
                   className="text-primary text-sm hover:underline text-right mt-1"
                 >
                   {t.auth.forgotPassword}
@@ -2670,7 +2798,7 @@ Thank you for using StyleAI!`
             <p className="text-center mt-6 text-white/60">
               {t.auth.noAccount}{' '}
               <button
-                onClick={() => { setPage('signup'); setAuthError('') }}
+                onClick={() => { navigateTo('signup'); setAuthError('') }}
                 className="text-primary hover:underline font-medium"
               >
                 {t.auth.signup}
@@ -2688,7 +2816,7 @@ Thank you for using StyleAI!`
       <div className="bg-background-dark text-white font-display min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -2783,7 +2911,7 @@ Thank you for using StyleAI!`
             <p className="text-center mt-6 text-white/60">
               {t.auth.hasAccount}{' '}
               <button
-                onClick={() => { setPage('login'); setAuthError('') }}
+                onClick={() => { navigateTo('login'); setAuthError('') }}
                 className="text-primary hover:underline font-medium"
               >
                 {t.auth.login}
@@ -2801,7 +2929,7 @@ Thank you for using StyleAI!`
       <div className="bg-background-dark text-white font-display min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <button onClick={() => setPage('login')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <button onClick={() => navigateTo('login')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -2854,7 +2982,7 @@ Thank you for using StyleAI!`
 
             <p className="text-center mt-6 text-white/60">
               <button
-                onClick={() => { setPage('login'); setAuthError('') }}
+                onClick={() => { navigateTo('login'); setAuthError('') }}
                 className="text-primary hover:underline font-medium"
               >
                 {t.auth.backToLogin}
@@ -2943,7 +3071,7 @@ Thank you for using StyleAI!`
       <div className="bg-background-dark text-white font-display min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -3024,7 +3152,7 @@ Thank you for using StyleAI!`
               </div>
 
               <button
-                onClick={user ? handleSubscribe : () => setPage('login')}
+                onClick={user ? handleSubscribe : () => navigateTo('login')}
                 disabled={loading}
                 className="w-full flex items-center justify-center rounded-xl h-14 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed mb-6"
               >
@@ -3083,7 +3211,7 @@ Thank you for using StyleAI!`
             <p className="text-white/60 lg:text-lg mb-8 max-w-md">{t.subscription.success.description}</p>
 
             <button
-              onClick={() => setPage('form')}
+              onClick={() => navigateTo('form')}
               className="flex items-center justify-center rounded-xl h-14 px-12 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 mx-auto"
             >
               <span className="material-symbols-outlined mr-2">tune</span>
@@ -3121,7 +3249,7 @@ Thank you for using StyleAI!`
       <div className="bg-background-dark text-white font-display min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <button onClick={() => setPage('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+            <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <h2 className="text-white text-xl font-extrabold tracking-tight">
@@ -3363,7 +3491,7 @@ Thank you for using StyleAI!`
             {t.result.tryAgain}
           </button>
           <button
-            onClick={() => setPage('landing')}
+            onClick={() => navigateTo('landing')}
             className="flex-1 flex items-center justify-center rounded-xl h-14 bg-white/5 border border-white/10 text-white text-lg font-medium tracking-tight hover:bg-white/10 transition-all"
           >
             {t.result.backHome}
@@ -3379,7 +3507,7 @@ Thank you for using StyleAI!`
           <h3 className="text-white text-xl font-bold mb-2">{t.animalTest.title}</h3>
           <p className="text-white/60 text-sm mb-4">{t.animalTest.description}</p>
           <button
-            onClick={() => setPage('animal-test')}
+            onClick={() => navigateTo('animal-test')}
             className="inline-flex items-center justify-center rounded-xl h-12 px-8 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold tracking-tight hover:brightness-110 transition-all shadow-lg"
           >
             <span className="material-symbols-outlined mr-2">pets</span>
