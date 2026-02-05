@@ -1366,7 +1366,14 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
       })
       const data = await response.json()
-      if (!response.ok || !data?.token || !data?.expiresAt) {
+      if (!response.ok) {
+        return null
+      }
+      if (data?.disabled) {
+        antiBotTokenRef.current = { token: '', expiresAt: Date.now() + 5 * 60_000 }
+        return ''
+      }
+      if (!data?.token || !data?.expiresAt) {
         return null
       }
       antiBotTokenRef.current = { token: data.token, expiresAt: data.expiresAt }
