@@ -2,6 +2,7 @@ import { getClientIp, rateLimit, verifyAntiBotToken } from './_antibot';
 
 interface Env {
   POLAR_ACCESS_TOKEN: string;
+  POLAR_ENV?: 'sandbox' | 'production';
   ANTI_BOT_SECRET: string;
 }
 
@@ -65,19 +66,32 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       }
     }
 
-    // Get origin from request body (sent by frontend)
-    const body = await request.json().catch(() => ({})) as { origin?: string };
-    const origin = body.origin || new URL(request.url).origin;
+    // Use the validated Origin header to prevent open-redirects.
     const successUrl = `${origin}/payment-success`;
 
-    const response = await fetch('https://sandbox-api.polar.sh/v1/checkouts/', {
+    const isSandbox = env.POLAR_ENV === 'sandbox';
+    if (isSandbox && !origin?.startsWith('http://localhost') && !origin?.startsWith('http://127.0.0.1')) {
+      return new Response(JSON.stringify({ error: 'Sandbox mode is only allowed from localhost.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const polarApiBase = isSandbox
+      ? 'https://sandbox-api.polar.sh'
+      : 'https://api.polar.sh';
+    const productId = isSandbox
+      ? '4da76d3a-45ee-4f2d-a5cc-d9e5183cd38c'
+      : '7e50b910-c6fe-40b6-bb6d-e4f99c040130';
+    console.log(`[checkout] polarEnv=${isSandbox ? 'sandbox' : 'production'}`);
+    const response = await fetch(`${polarApiBase}/v1/checkouts/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${env.POLAR_ACCESS_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        products: ['4da76d3a-45ee-4f2d-a5cc-d9e5183cd38c'],
+        products: [productId],
         success_url: successUrl,
       }),
     });

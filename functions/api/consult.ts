@@ -53,6 +53,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
   }
 
+  if (!env.ANTI_BOT_SECRET) {
+    return new Response(JSON.stringify({ error: 'Anti-bot not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  }
+
   try {
     const ip = getClientIp(request);
     const limiter = rateLimit(`consult:${ip}`, 6, 60_000);
@@ -68,13 +75,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const antiBotToken = request.headers.get('X-AntiBot-Token');
-    if (env.ANTI_BOT_SECRET) {
-      if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
-        return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
-          status: 403,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        });
-      }
+    if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
+      return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
     }
 
     const { photo, gender, height, weight } = await request.json();

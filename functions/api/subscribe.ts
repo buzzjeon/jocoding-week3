@@ -2,6 +2,7 @@ import { getClientIp, rateLimit, verifyAntiBotToken } from './_antibot';
 
 interface Env {
   POLAR_ACCESS_TOKEN: string;
+  POLAR_ENV?: 'sandbox' | 'production';
   ANTI_BOT_SECRET: string;
 }
 
@@ -66,16 +67,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const body = await request.json().catch(() => ({})) as {
-      origin?: string;
       userId?: string;
       email?: string;
     };
 
-    const origin = body.origin || new URL(request.url).origin;
+    // Use the validated Origin header to prevent open-redirects.
     const successUrl = `${origin}/subscription-success`;
 
     // StyleAI Daily Premium subscription product ID
-    const SUBSCRIPTION_PRODUCT_ID = '50ac0439-8520-47e8-a496-25a96d7a56b3';
+    const SUBSCRIPTION_PRODUCT_ID = env.POLAR_ENV === 'sandbox'
+      ? '6c3bb3df-11fc-4ef7-980f-4be61ce5f883'
+      : '50ac0439-8520-47e8-a496-25a96d7a56b3';
 
     const checkoutData: Record<string, unknown> = {
       products: [SUBSCRIPTION_PRODUCT_ID],
@@ -92,7 +94,19 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       checkoutData.customer_email = body.email;
     }
 
-    const response = await fetch('https://sandbox-api.polar.sh/v1/checkouts/', {
+    const isSandbox = env.POLAR_ENV === 'sandbox';
+    if (isSandbox && !origin?.startsWith('http://localhost') && !origin?.startsWith('http://127.0.0.1')) {
+      return new Response(JSON.stringify({ error: 'Sandbox mode is only allowed from localhost.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const polarApiBase = isSandbox
+      ? 'https://sandbox-api.polar.sh'
+      : 'https://api.polar.sh';
+    console.log(`[subscribe] polarEnv=${isSandbox ? 'sandbox' : 'production'}`);
+    const response = await fetch(`${polarApiBase}/v1/checkouts/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${env.POLAR_ACCESS_TOKEN}`,

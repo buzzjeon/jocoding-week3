@@ -13,9 +13,11 @@ export default {
         "background-light": "#F7F9F5",
         "background-dark": "#0B0F10",
         "surface": "#12181A",
+        "accent": "#5ED0C3",
       },
       fontFamily: {
-        "display": ["Sora", "sans-serif"]
+        "display": ["Space Grotesk", "sans-serif"],
+        "body": ["Manrope", "sans-serif"]
       },
     },
   },

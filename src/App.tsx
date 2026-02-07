@@ -1109,7 +1109,7 @@ function AnimalTestPage({ t, lang, navigateTo, LanguageSelector }: AnimalTestPag
   }
 
   return (
-    <div className="bg-background-dark text-white font-display min-h-screen">
+    <div className="bg-background-dark text-white font-body min-h-screen">
       <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
         <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
           <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
@@ -2034,12 +2034,14 @@ Thank you for using StyleAI!`
   // Landing Page
   if (page === 'landing') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen relative overflow-hidden">
-        {/* Subtle Gradient Background */}
+      <div className="bg-background-dark text-white font-body min-h-screen relative overflow-hidden">
+        {/* Atmospheric Background */}
         <div className="fixed inset-0 z-0">
-          <div className="absolute inset-0 tech-grid" />
-          <div className="absolute top-0 left-0 w-[520px] h-[520px] rounded-full bg-primary/12 blur-[160px]" />
-          <div className="absolute bottom-0 right-0 w-[420px] h-[420px] rounded-full bg-secondary/12 blur-[140px]" />
+          <div className="absolute inset-0 aurora-bg" />
+          <div className="absolute inset-0 tech-grid opacity-70" />
+          <div className="absolute inset-0 noise opacity-50" />
+          <div className="absolute -top-20 left-6 w-[420px] h-[420px] rounded-full glow-orb" />
+          <div className="absolute bottom-[-140px] right-8 w-[520px] h-[520px] rounded-full bg-primary/20 blur-[180px]" />
         </div>
         {/* Top Navigation */}
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
@@ -2052,7 +2054,7 @@ Thank you for using StyleAI!`
               <a href="#" className="text-white/60 hover:text-white transition-colors">{t.nav.browse}</a>
               <a href="#" className="text-white/60 hover:text-white transition-colors">{t.nav.saved}</a>
             </div>
-            <h2 className="text-white text-xl font-extrabold tracking-tight">
+            <h2 className="text-white text-xl font-extrabold tracking-tight font-display">
               Style<span className="text-primary text-2xl">AI</span>
             </h2>
             <div className="flex items-center gap-2">
@@ -2107,155 +2109,203 @@ Thank you for using StyleAI!`
 
         <main className="relative z-10 pt-16 max-w-6xl mx-auto pb-24 lg:pb-12">
           {/* Hero Section */}
-          <section className="relative min-h-[80vh] lg:min-h-[90vh] flex flex-col lg:flex-row lg:items-center px-6">
+          <section className="relative min-h-[80vh] lg:min-h-[90vh] grid lg:grid-cols-[1.1fr_0.9fr] items-center gap-10 px-6">
             {/* Content */}
-            <div className="relative z-10 flex flex-col gap-4 lg:w-1/2 lg:pr-8 py-12 lg:py-20">
-              <span className="text-primary font-bold tracking-widest text-xs uppercase">{t.hero.tagline}</span>
-              <h1 className="text-white text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black leading-tight tracking-[-0.03em]">
+            <div className="relative z-10 flex flex-col gap-5 lg:gap-6 py-12 lg:py-24">
+              <div className="reveal">
+                <span className="text-primary font-bold tracking-[0.3em] text-[11px] uppercase">{t.hero.tagline}</span>
+                <div className="mt-4 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em] text-white/50">
+                  <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5">Body scan</span>
+                  <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5">Color harmony</span>
+                  <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5">Instant fit</span>
+                </div>
+              </div>
+              <h1 className="reveal reveal-1 text-white text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-bold leading-[1.05] tracking-[-0.03em]">
                 {t.hero.title1} <br />
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   {t.hero.title2}
                 </span>
               </h1>
-              <p className="text-white/80 text-lg lg:text-xl font-light leading-relaxed max-w-[400px]">
+              <p className="reveal reveal-2 text-white/80 text-lg lg:text-xl font-medium leading-relaxed max-w-[460px]">
                 {t.hero.description}
               </p>
-              <div className="mt-4 flex flex-col sm:flex-row gap-4">
+              <div className="reveal reveal-3 flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={() => navigateTo('form')}
-                  className="flex items-center justify-center rounded-xl h-14 px-8 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20"
+                  className="flex items-center justify-center rounded-2xl h-14 px-8 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20"
                 >
                   {t.hero.cta}
                 </button>
+                <button
+                  onClick={() => navigateTo('about')}
+                  className="flex items-center justify-center rounded-2xl h-14 px-8 border border-white/15 bg-white/5 text-white text-lg font-semibold hover:bg-white/10 transition-all"
+                >
+                  {t.footer.about}
+                </button>
+              </div>
+              <div className="reveal reveal-4 grid grid-cols-3 gap-3 pt-2 text-xs text-white/60">
+                <div className="glass-panel rounded-2xl px-4 py-3 text-center">
+                  <p className="text-white text-lg font-display font-semibold">2M+</p>
+                  <p className="text-white/50">Fits analyzed</p>
+                </div>
+                <div className="glass-panel rounded-2xl px-4 py-3 text-center">
+                  <p className="text-white text-lg font-display font-semibold">12s</p>
+                  <p className="text-white/50">Avg. report</p>
+                </div>
+                <div className="glass-panel rounded-2xl px-4 py-3 text-center">
+                  <p className="text-white text-lg font-display font-semibold">98%</p>
+                  <p className="text-white/50">Love rate</p>
+                </div>
               </div>
             </div>
 
             {/* Hero Image */}
-            <div className="lg:w-1/2 flex justify-center items-center py-8 lg:py-0">
-              <img
-                src="/hero-image.png"
-                alt="AI Personal Stylist"
-                className="w-full max-w-[500px] lg:max-w-none lg:w-full h-auto rounded-2xl shadow-2xl shadow-primary/10"
-              />
+            <div className="relative lg:pl-4">
+              <div className="relative p-1 rounded-[28px] bg-gradient-to-br from-primary/60 via-white/5 to-secondary/60 shadow-2xl">
+                <div className="glass-panel rounded-[24px] p-4">
+                  <img
+                    src="/hero-image.png"
+                    alt="AI Personal Stylist"
+                    className="w-full h-auto rounded-[20px] object-cover"
+                  />
+                </div>
+              </div>
+              <div className="absolute -bottom-6 -left-4 glass-panel rounded-2xl p-4 max-w-[240px] hidden sm:block">
+                <p className="text-[10px] text-white/50 uppercase tracking-[0.2em]">Live insight</p>
+                <p className="text-white font-semibold">Color palette matched</p>
+                <div className="mt-3 flex gap-2">
+                  <span className="h-3 w-3 rounded-full bg-primary" />
+                  <span className="h-3 w-3 rounded-full bg-secondary" />
+                  <span className="h-3 w-3 rounded-full bg-accent" />
+                  <span className="h-3 w-3 rounded-full bg-white/60" />
+                </div>
+              </div>
+              <div className="absolute -top-6 right-2 glass-panel rounded-2xl px-4 py-2 text-xs hidden sm:flex items-center gap-2">
+                <span className="material-symbols-outlined text-accent text-[18px]">auto_awesome</span>
+                <span className="text-white/70">AI fitted in 12s</span>
+              </div>
             </div>
           </section>
 
           {/* Powered By */}
-          <div className="px-6 py-6 border-y border-white/5 bg-background-dark/50 flex justify-center items-center gap-4">
-            <span className="material-symbols-outlined text-primary text-[20px]">smart_toy</span>
-            <span className="text-sm font-medium text-white/60">{t.social.poweredBy}</span>
+          <div className="px-6 py-6">
+            <div className="glass-panel rounded-2xl px-6 py-4 flex justify-center items-center gap-4">
+              <span className="material-symbols-outlined text-primary text-[20px]">smart_toy</span>
+              <span className="text-sm font-medium text-white/60">{t.social.poweredBy}</span>
+            </div>
           </div>
 
           {/* Features Section */}
           <section className="px-6 py-16 lg:py-24 flex flex-col gap-12">
             <div className="flex flex-col gap-4 max-w-2xl mx-auto text-center lg:text-left lg:mx-0">
-              <h2 className="text-white text-3xl lg:text-4xl font-bold leading-tight tracking-tight">{t.features.title}</h2>
+              <h2 className="text-white text-3xl lg:text-4xl font-display font-bold leading-tight tracking-tight">
+                {t.features.title}
+              </h2>
               <p className="text-white/60 text-base lg:text-lg font-normal leading-relaxed">
                 {t.features.description}
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-              <div className="flex gap-5 rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/[0.08] transition-colors">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+              <div className="glass-panel flex gap-5 rounded-3xl p-6 hover:bg-white/[0.06] transition-colors">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/20 text-primary">
                   <span className="material-symbols-outlined text-[28px]">body_system</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <h3 className="text-white text-lg font-bold">{t.features.bodyAnalysis}</h3>
+                  <h3 className="text-white text-lg font-semibold">{t.features.bodyAnalysis}</h3>
                   <p className="text-white/50 text-sm leading-normal">{t.features.bodyAnalysisDesc}</p>
                 </div>
               </div>
-              <div className="flex gap-5 rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/[0.08] transition-colors">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+              <div className="glass-panel flex gap-5 rounded-3xl p-6 hover:bg-white/[0.06] transition-colors">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-secondary/20 text-secondary">
                   <span className="material-symbols-outlined text-[28px]">apparel</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <h3 className="text-white text-lg font-bold">{t.features.personalizedFits}</h3>
+                  <h3 className="text-white text-lg font-semibold">{t.features.personalizedFits}</h3>
                   <p className="text-white/50 text-sm leading-normal">{t.features.personalizedFitsDesc}</p>
                 </div>
               </div>
-              <div className="flex gap-5 rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/[0.08] transition-colors md:col-span-2 lg:col-span-1">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+              <div className="glass-panel flex gap-5 rounded-3xl p-6 hover:bg-white/[0.06] transition-colors md:col-span-2 lg:col-span-1">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent/20 text-accent">
                   <span className="material-symbols-outlined text-[28px]">auto_awesome</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <h3 className="text-white text-lg font-bold">{t.features.styleDiscovery}</h3>
+                  <h3 className="text-white text-lg font-semibold">{t.features.styleDiscovery}</h3>
                   <p className="text-white/50 text-sm leading-normal">{t.features.styleDiscoveryDesc}</p>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Timeline Section */}
-          <section className="bg-white/[0.02] py-16 lg:py-24 border-y border-white/5">
-            <h2 className="text-white text-3xl lg:text-4xl font-bold tracking-tight px-6 pb-12 text-center">{t.process.title}</h2>
-            <div className="grid grid-cols-[60px_1fr] lg:grid-cols-3 gap-x-2 lg:gap-8 px-8 max-w-4xl mx-auto">
-              {/* Step 1 */}
-              <div className="flex flex-col items-center gap-1 lg:items-center">
-                <div className="flex h-10 w-10 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-primary text-background-dark">
-                  <span className="material-symbols-outlined text-[20px] lg:text-[28px] font-bold">photo_camera</span>
+          {/* Process Section */}
+          <section className="py-16 lg:py-24 px-6">
+            <div className="max-w-5xl mx-auto">
+              <h2 className="text-white text-3xl lg:text-4xl font-display font-bold tracking-tight text-center">
+                {t.process.title}
+              </h2>
+              <div className="grid md:grid-cols-3 gap-6 mt-10">
+                <div className="glass-panel rounded-3xl p-6">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-background-dark mb-4">
+                    <span className="material-symbols-outlined text-[24px]">photo_camera</span>
+                  </div>
+                  <p className="text-white text-lg font-semibold mb-2">{t.process.step1}</p>
+                  <p className="text-white/50 text-sm leading-relaxed">{t.process.step1Desc}</p>
                 </div>
-                <div className="w-[2px] bg-primary/30 h-16 grow lg:hidden" />
-              </div>
-              <div className="flex flex-1 flex-col pt-1 pb-10 lg:text-center lg:pb-0">
-                <p className="text-white text-lg font-bold leading-none mb-2">{t.process.step1}</p>
-                <p className="text-white/50 text-sm leading-relaxed">{t.process.step1Desc}</p>
-              </div>
-              {/* Step 2 */}
-              <div className="flex flex-col items-center gap-1 lg:items-center">
-                <div className="flex h-10 w-10 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-primary text-background-dark">
-                  <span className="material-symbols-outlined text-[20px] lg:text-[28px] font-bold">memory</span>
+                <div className="glass-panel rounded-3xl p-6">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-background-dark mb-4">
+                    <span className="material-symbols-outlined text-[24px]">memory</span>
+                  </div>
+                  <p className="text-white text-lg font-semibold mb-2">{t.process.step2}</p>
+                  <p className="text-white/50 text-sm leading-relaxed">{t.process.step2Desc}</p>
                 </div>
-                <div className="w-[2px] bg-primary/30 h-16 grow lg:hidden" />
-              </div>
-              <div className="flex flex-1 flex-col pt-1 pb-10 lg:text-center lg:pb-0">
-                <p className="text-white text-lg font-bold leading-none mb-2">{t.process.step2}</p>
-                <p className="text-white/50 text-sm leading-relaxed">{t.process.step2Desc}</p>
-              </div>
-              {/* Step 3 */}
-              <div className="flex flex-col items-center gap-1 lg:items-center">
-                <div className="flex h-10 w-10 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-primary text-background-dark">
-                  <span className="material-symbols-outlined text-[20px] lg:text-[28px] font-bold">check_circle</span>
+                <div className="glass-panel rounded-3xl p-6">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-background-dark mb-4">
+                    <span className="material-symbols-outlined text-[24px]">check_circle</span>
+                  </div>
+                  <p className="text-white text-lg font-semibold mb-2">{t.process.step3}</p>
+                  <p className="text-white/50 text-sm leading-relaxed">{t.process.step3Desc}</p>
                 </div>
-              </div>
-              <div className="flex flex-1 flex-col pt-1 lg:text-center">
-                <p className="text-white text-lg font-bold leading-none mb-2">{t.process.step3}</p>
-                <p className="text-white/50 text-sm leading-relaxed">{t.process.step3Desc}</p>
               </div>
             </div>
           </section>
 
           {/* CTA Section */}
-          <section className="px-6 py-20 lg:py-32 text-center flex flex-col gap-8 max-w-2xl mx-auto">
-            <div className="space-y-4">
-              <h2 className="text-white text-3xl lg:text-5xl font-black">{t.cta.title}</h2>
-              <p className="text-white/60 lg:text-lg">{t.cta.description}</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-              <div className="flex flex-col gap-2 items-center">
-                <button
-                  onClick={() => navigateTo('form')}
-                  className="w-full sm:w-auto flex items-center justify-center rounded-xl h-14 px-12 bg-white/10 border border-white/20 text-white text-lg font-bold tracking-tight hover:bg-white/20 transition-all"
-                >
-                  {t.cta.button}
-                </button>
-                <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">{t.cta.note}</p>
-              </div>
-              <div className="flex flex-col gap-2 items-center">
-                <button
-                  onClick={() => navigateTo('subscription')}
-                  className="w-full sm:w-auto flex items-center justify-center rounded-xl h-14 px-12 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 transition-all shadow-lg shadow-primary/20"
-                >
-                  <span className="material-symbols-outlined mr-2">workspace_premium</span>
-                  {t.cta.premiumButton}
-                </button>
-                <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">{t.subscription.pricing.trial}</p>
+          <section className="px-6 py-20 lg:py-32">
+            <div className="max-w-3xl mx-auto text-center">
+              <div className="relative rounded-[32px] p-[1px] bg-gradient-to-r from-primary/50 via-white/5 to-secondary/50">
+                <div className="glass-panel rounded-[30px] px-8 py-12 lg:px-12 lg:py-14 flex flex-col gap-8">
+                  <div className="space-y-4">
+                    <h2 className="text-white text-3xl lg:text-5xl font-display font-bold">{t.cta.title}</h2>
+                    <p className="text-white/60 lg:text-lg">{t.cta.description}</p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+                    <div className="flex flex-col gap-2 items-center">
+                      <button
+                        onClick={() => navigateTo('form')}
+                        className="w-full sm:w-auto flex items-center justify-center rounded-2xl h-14 px-12 bg-white/10 border border-white/20 text-white text-lg font-bold tracking-tight hover:bg-white/20 transition-all"
+                      >
+                        {t.cta.button}
+                      </button>
+                      <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">{t.cta.note}</p>
+                    </div>
+                    <div className="flex flex-col gap-2 items-center">
+                      <button
+                        onClick={() => navigateTo('subscription')}
+                        className="w-full sm:w-auto flex items-center justify-center rounded-2xl h-14 px-12 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 transition-all shadow-lg shadow-primary/20"
+                      >
+                        <span className="material-symbols-outlined mr-2">workspace_premium</span>
+                        {t.cta.premiumButton}
+                      </button>
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">{t.subscription.pricing.trial}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
 
           {/* Email Test Section */}
           <section className="px-6 py-16 max-w-md mx-auto">
-            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-2xl p-6 text-center">
+            <div className="glass-panel rounded-3xl p-6 text-center">
               <span className="material-symbols-outlined text-primary text-4xl mb-4">mail</span>
               <h3 className="text-white text-xl font-bold mb-2">{t.emailTest.title}</h3>
               <p className="text-white/60 text-sm mb-4">{t.emailTest.description}</p>
@@ -2327,7 +2377,7 @@ Thank you for using StyleAI!`
   // Form Page
   if (page === 'form') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         {/* Top Navigation */}
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
@@ -2458,7 +2508,7 @@ Thank you for using StyleAI!`
 
   // Policy Page Component
   const PolicyPage = ({ title, lastUpdated, content }: { title: string; lastUpdated: string; content: string }) => (
-    <div className="bg-background-dark text-white font-display min-h-screen">
+    <div className="bg-background-dark text-white font-body min-h-screen">
       <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
         <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
           <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
@@ -2517,7 +2567,7 @@ Thank you for using StyleAI!`
   // Partnership Page
   if (page === 'partnership') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
             <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
@@ -2543,7 +2593,7 @@ Thank you for using StyleAI!`
   // About Page
   if (page === 'about') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
             <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
@@ -2635,7 +2685,7 @@ Thank you for using StyleAI!`
   // FAQ Page
   if (page === 'faq') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
             <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
@@ -2698,7 +2748,7 @@ Thank you for using StyleAI!`
   // Payment Success Page
   if (page === 'payment-success') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         {/* Top Navigation */}
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
@@ -2738,7 +2788,7 @@ Thank you for using StyleAI!`
   // Login Page
   if (page === 'login') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
             <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
@@ -2847,7 +2897,7 @@ Thank you for using StyleAI!`
   // Signup Page
   if (page === 'signup') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
             <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
@@ -2960,7 +3010,7 @@ Thank you for using StyleAI!`
   // Forgot Password Page
   if (page === 'forgot-password') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
             <button onClick={() => navigateTo('login')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
@@ -3031,7 +3081,7 @@ Thank you for using StyleAI!`
   // Reset Password Page
   if (page === 'reset-password') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
             <div className="w-10" />
@@ -3102,7 +3152,7 @@ Thank you for using StyleAI!`
   // Subscription Page
   if (page === 'subscription') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
             <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
@@ -3224,7 +3274,7 @@ Thank you for using StyleAI!`
   // Subscription Success Page
   if (page === 'subscription-success') {
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
             <div className="w-10" />
@@ -3280,7 +3330,7 @@ Thank you for using StyleAI!`
     const isOAuthUser = user?.app_metadata?.provider === 'google'
 
     return (
-      <div className="bg-background-dark text-white font-display min-h-screen">
+      <div className="bg-background-dark text-white font-body min-h-screen">
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
             <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
@@ -3435,7 +3485,7 @@ Thank you for using StyleAI!`
 
   // Result Page
   return (
-    <div className="bg-background-dark text-white font-display min-h-screen">
+    <div className="bg-background-dark text-white font-body min-h-screen">
       {/* Top Navigation */}
       <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
         <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">

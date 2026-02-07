@@ -1,12 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: 'Sora', sans-serif;
+  font-family: 'Manrope', sans-serif;
   margin: 0;
+  background: #0b0f10;
+  color: #e9eef3;
+}
+
+a {
+  color: inherit;
+}
+
+:root {
+  --bg: #0b0f10;
+  --surface: #111719;
+  --primary: #8bcf6b;
+  --secondary: #ffb347;
+  --accent: #5ed0c3;
 }
 
 .glass {
@@ -21,4 +35,63 @@ body {
     linear-gradient(90deg, rgba(255, 179, 71, 0.06) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: radial-gradient(circle at 40% 20%, rgba(0,0,0,0.9), transparent 60%);
+}
+
+.aurora-bg {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(94, 208, 195, 0.18), transparent 60%),
+    radial-gradient(900px 500px at 90% 10%, rgba(139, 207, 107, 0.22), transparent 55%),
+    radial-gradient(600px 520px at 50% 90%, rgba(255, 179, 71, 0.2), transparent 50%),
+    linear-gradient(180deg, rgba(8, 11, 12, 0.9) 0%, rgba(10, 14, 15, 0.9) 45%, rgba(11, 15, 16, 1) 100%);
+}
+
+.noise {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.glow-orb {
+  background: radial-gradient(circle, rgba(94, 208, 195, 0.45), transparent 60%);
+  filter: blur(30px);
+  opacity: 0.7;
+  animation: float 12s ease-in-out infinite;
+}
+
+.glass-panel {
+  background: rgba(16, 22, 24, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: reveal 0.8s ease forwards;
+}
+
+.reveal-1 { animation-delay: 0.08s; }
+.reveal-2 { animation-delay: 0.16s; }
+.reveal-3 { animation-delay: 0.24s; }
+.reveal-4 { animation-delay: 0.32s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+@keyframes reveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(18px); }
 }

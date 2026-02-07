@@ -36,3 +36,6 @@ code.html
 polar.txt
 screen.png
 Gemini_Generated_Image_*
+
+# MCP config (contains credential paths)
+.mcp.json

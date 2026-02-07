@@ -1,4 +1,4 @@
-import { getClientIp, rateLimit } from \'./_antibot\';
+import { getClientIp, rateLimit } from './_antibot';
 
 interface Env {
   OPENAI_API_KEY: string;
@@ -12,42 +12,42 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const ip = getClientIp(request);
   const limiter = rateLimit(`analyze-color:${ip}`, 5, 60_000);
   if (!limiter.allowed) {
-    return new Response(JSON.stringify({ error: \'Too many requests\' }), { status: 429 });
+    return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
   }
 
   try {
     const formData = await request.formData();
-    const imageFile = formData.get(\'image\');
-    const lang = formData.get(\'lang\') as string || \'en\';
+    const imageFile = formData.get('image');
+    const lang = formData.get('lang') as string || 'en';
 
     if (!(imageFile instanceof File)) {
-      return new Response(JSON.stringify({ error: \'Image not provided\' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'Image not provided' }), { status: 400 });
     }
 
     const imageBase64 = await convertImageToBase64(imageFile);
 
     // 2. OpenAI API 호출
-    const response = await fetch(\'https://api.openai.com/v1/chat/completions\', {
-      method: \'POST\',
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        \'Content-Type\': \'application/json\',
-        \'Authorization\': `Bearer ${env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: \'gpt-4-vision-preview\',
+        model: 'gpt-4-vision-preview',
         messages: [
           {
-            role: \'user\',
+            role: 'user',
             content: [
               {
-                type: \'text\',
+                type: 'text',
                 text: createPrompt(lang), // 3. 상세한 프롬프트 생성
               },
               {
-                type: \'image_url\',
+                type: 'image_url',
                 image_url: {
                   url: `data:image/jpeg;base64,${imageBase64}`,
-                  detail: \'high\',
+                  detail: 'high',
                 },
               },
             ],
@@ -60,19 +60,19 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const data = await response.json();
 
     if (!response.ok || !data.choices || !data.choices[0].message.content) {
-      console.error(\'OpenAI API Error:\', data);
-      return new Response(JSON.stringify({ error: \'Failed to analyze image.\' }), { status: 500 });
+      console.error('OpenAI API Error:', data);
+      return new Response(JSON.stringify({ error: 'Failed to analyze image.' }), { status: 500 });
     }
 
     const analysisResult = data.choices[0].message.content;
 
     return new Response(analysisResult, {
-      headers: { \'Content-Type\': \'application/json; charset=utf-8\' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
     });
 
   } catch (error) {
-    console.error(\'Error in analyze-color function:\', error);
-    return new Response(JSON.stringify({ error: \'Internal server error.\' }), { status: 500 });
+    console.error('Error in analyze-color function:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error.' }), { status: 500 });
   }
 };
 
@@ -80,12 +80,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 async function convertImageToBase64(image: File): Promise<string> {
   const arrayBuffer = await image.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  return buffer.toString(\'base64\');
+  return buffer.toString('base64');
 }
 
 // 3. 프롬프트 생성 함수
 function createPrompt(lang: string): string {
-  if (lang === \'ko\') {
+  if (lang === 'ko') {
     return `
       당신은 전문 퍼스널 컬러 컨설턴트입니다.
       주어진 얼굴 사진을 정밀하게 분석하여 다음 형식에 맞춰 결과를 JSON으로 제공해주세요.
