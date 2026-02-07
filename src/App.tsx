@@ -452,7 +452,7 @@ For refund-related questions, please contact refunds@styleai.com.
       step3Desc: '쇼핑 링크가 포함된 맞춤형 디지털 룩북을 받아보세요.',
     },
     cta: {
-      title: '룩을 업그레이드하세요',
+      title: 'Look을 업그레이드하세요',
       description: 'AI 기반 패션 추천으로 나만의 완벽한 스타일을 발견하세요.',
       button: '무료로 시작하기',
       note: '신용카드 불필요',
@@ -1355,6 +1355,8 @@ function App() {
     setShowLangMenu(false)
   }
 
+  const paymentProcessedRef = useRef(false)
+
   const getAntiBotToken = async () => {
     const cached = antiBotTokenRef.current
     if (cached && cached.expiresAt > Date.now() + 30_000) {
@@ -1643,7 +1645,10 @@ function App() {
       const data = await response.json()
 
       if (data.error) {
-        alert(lang === 'ko' ? '구독 오류: ' + data.error : 'Subscription error: ' + data.error)
+        const details = data.details ? ` (${data.details})` : ''
+        alert(lang === 'ko'
+          ? `구독 오류: ${data.error}${details}`
+          : `Subscription error: ${data.error}${details}`)
         return
       }
 
@@ -1703,6 +1708,59 @@ function App() {
     }
   }
 
+  const pendingConsultKey = 'pending-consult'
+
+  const loadPendingConsult = () => {
+    try {
+      const stored = sessionStorage.getItem(pendingConsultKey)
+      if (!stored) return null
+      return JSON.parse(stored) as { photo: string | null; gender: string; height: string; weight: string }
+    } catch {
+      return null
+    }
+  }
+
+  const clearPendingConsult = () => {
+    sessionStorage.removeItem(pendingConsultKey)
+  }
+
+  const generateReport = async (payload: { photo: string | null; gender: string; height: string; weight: string }) => {
+    setLoading(true)
+    setReport('')
+    setHairstyleImage(null)
+
+    try {
+      const antiBotToken = await getAntiBotToken()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (antiBotToken) {
+        headers['X-AntiBot-Token'] = antiBotToken
+      }
+      const response = await fetch('/api/consult', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      })
+
+      const data = await response.json()
+
+      if (data.error) {
+        alert(t.errors.apiError + data.error)
+        return
+      }
+
+      setReport(data.report)
+      if (data.hairstyleImage) {
+        setHairstyleImage(data.hairstyleImage)
+      }
+      clearPendingConsult()
+      navigateTo('result')
+    } catch {
+      alert(t.errors.connectionFailed)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -1722,24 +1780,28 @@ function App() {
       if (antiBotToken) {
         headers['X-AntiBot-Token'] = antiBotToken
       }
-      const response = await fetch('/api/consult', {
+      const payload = { photo: compressedPhoto, gender, height, weight }
+      sessionStorage.setItem(pendingConsultKey, JSON.stringify(payload))
+
+      const response = await fetch('/api/checkout', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ photo: compressedPhoto, gender, height, weight }),
+        body: JSON.stringify({}),
       })
 
       const data = await response.json()
 
       if (data.error) {
+        clearPendingConsult()
         alert(t.errors.apiError + data.error)
+      } else if (data.url) {
+        window.location.href = data.url
       } else {
-        setReport(data.report)
-        if (data.hairstyleImage) {
-          setHairstyleImage(data.hairstyleImage)
-        }
-        navigateTo('result')
+        clearPendingConsult()
+        alert(t.errors.apiError + 'No checkout URL returned.')
       }
     } catch {
+      clearPendingConsult()
       alert(t.errors.connectionFailed)
     } finally {
       setLoading(false)
@@ -1751,6 +1813,27 @@ function App() {
     setHairstyleImage(null)
     navigateTo('form')
   }
+
+  const handlePaymentSuccessContinue = async () => {
+    const pending = loadPendingConsult()
+    if (!pending) {
+      navigateTo('form')
+      return
+    }
+    await generateReport(pending)
+  }
+
+  useEffect(() => {
+    if (page !== 'payment-success') {
+      paymentProcessedRef.current = false
+      return
+    }
+    if (paymentProcessedRef.current) return
+    const pending = loadPendingConsult()
+    if (!pending) return
+    paymentProcessedRef.current = true
+    void generateReport(pending)
+  }, [page])
 
   const handleDownload = async () => {
     if (!resultRef.current) return
@@ -1837,7 +1920,7 @@ function App() {
         }, 2000)
       } else {
         setEmailStatus('error')
-        setEmailErrorMessage(data?.error || t.result.emailError)
+        setEmailErrorMessage(data?.error || data?.details || t.result.emailError)
       }
     } catch (error) {
       console.error('Email send failed:', error)
@@ -1914,7 +1997,7 @@ Thank you for using StyleAI!`
         }, 3000)
       } else {
         setEmailStatus('error')
-        setEmailErrorMessage(data?.error || t.emailTest.error)
+        setEmailErrorMessage(data?.error || data?.details || t.emailTest.error)
       }
     } catch (error) {
       console.error('Test email send failed:', error)
@@ -1964,6 +2047,7 @@ Thank you for using StyleAI!`
             placeholder={t.result.emailPlaceholder}
             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary/50 transition-colors"
             disabled={emailSending}
+            autoFocus
           />
 
           {emailStatus === 'success' && (
@@ -2046,9 +2130,7 @@ Thank you for using StyleAI!`
         {/* Top Navigation */}
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <div className="flex items-center gap-2 lg:hidden">
-              <span className="material-symbols-outlined text-primary text-[28px]">menu</span>
-            </div>
+            <div className="w-8 lg:hidden" />
             <div className="hidden lg:flex items-center gap-8">
               <a href="#" className="text-white/60 hover:text-white transition-colors">{t.nav.home}</a>
               <a href="#" className="text-white/60 hover:text-white transition-colors">{t.nav.browse}</a>
@@ -2107,7 +2189,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="relative z-10 pt-16 max-w-6xl mx-auto pb-24 lg:pb-12">
+        <main className="relative z-10 pt-24 max-w-6xl mx-auto pb-24 lg:pb-12">
           {/* Hero Section */}
           <section className="relative min-h-[80vh] lg:min-h-[90vh] grid lg:grid-cols-[1.1fr_0.9fr] items-center gap-10 px-6">
             {/* Content */}
@@ -2131,7 +2213,7 @@ Thank you for using StyleAI!`
               </p>
               <div className="reveal reveal-3 flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={() => navigateTo('form')}
+                  onClick={() => navigateTo('animal-test')}
                   className="flex items-center justify-center rounded-2xl h-14 px-8 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20"
                 >
                   {t.hero.cta}
@@ -2186,14 +2268,6 @@ Thank you for using StyleAI!`
               </div>
             </div>
           </section>
-
-          {/* Powered By */}
-          <div className="px-6 py-6">
-            <div className="glass-panel rounded-2xl px-6 py-4 flex justify-center items-center gap-4">
-              <span className="material-symbols-outlined text-primary text-[20px]">smart_toy</span>
-              <span className="text-sm font-medium text-white/60">{t.social.poweredBy}</span>
-            </div>
-          </div>
 
           {/* Features Section */}
           <section className="px-6 py-16 lg:py-24 flex flex-col gap-12">
@@ -2280,7 +2354,7 @@ Thank you for using StyleAI!`
                   <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
                     <div className="flex flex-col gap-2 items-center">
                       <button
-                        onClick={() => navigateTo('form')}
+                        onClick={() => navigateTo('animal-test')}
                         className="w-full sm:w-auto flex items-center justify-center rounded-2xl h-14 px-12 bg-white/10 border border-white/20 text-white text-lg font-bold tracking-tight hover:bg-white/20 transition-all"
                       >
                         {t.cta.button}
@@ -2369,7 +2443,6 @@ Thank you for using StyleAI!`
           </div>
         </div>
 
-        {showEmailModal && <EmailPanel />}
       </div>
     )
   }
@@ -2773,11 +2846,12 @@ Thank you for using StyleAI!`
             <p className="text-white/60 lg:text-lg mb-8 max-w-md">{t.paymentSuccess.description}</p>
 
             <button
-              onClick={() => navigateTo('form')}
-              className="flex items-center justify-center rounded-xl h-14 px-12 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 mx-auto"
+              onClick={handlePaymentSuccessContinue}
+              disabled={loading}
+              className="flex items-center justify-center rounded-xl h-14 px-12 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 mx-auto disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span className="material-symbols-outlined mr-2">auto_awesome</span>
-              {t.paymentSuccess.button}
+              {loading ? t.form.analyzing : t.paymentSuccess.button}
             </button>
           </div>
         </main>

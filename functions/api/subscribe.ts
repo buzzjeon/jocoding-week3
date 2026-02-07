@@ -33,16 +33,22 @@ const getCorsHeaders = (origin: string | null) => {
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
-  const origin = request.headers.get('Origin');
-  const corsHeaders = getCorsHeaders(origin);
-  if (!corsHeaders) {
-    return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
-      status: 403,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
   try {
+    const body = await request.json().catch(() => ({})) as {
+      origin?: string;
+      userId?: string;
+      email?: string;
+    };
+
+    const origin = request.headers.get('Origin') || body.origin || null;
+    const corsHeaders = getCorsHeaders(origin);
+    if (!corsHeaders) {
+      return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const ip = getClientIp(request);
     const limiter = rateLimit(`subscribe:${ip}`, 6, 60_000);
     if (!limiter.allowed) {
@@ -65,11 +71,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         });
       }
     }
-
-    const body = await request.json().catch(() => ({})) as {
-      userId?: string;
-      email?: string;
-    };
 
     // Use the validated Origin header to prevent open-redirects.
     const successUrl = `${origin}/subscription-success`;
