@@ -119,7 +119,7 @@ const translations = {
       value3Text: 'Our AI learns and improves constantly to provide better recommendations.',
       contact: 'Contact Us',
       contactText: 'Have questions or feedback? We\'d love to hear from you.',
-      contactEmail: 'support@styleai.com',
+      contactEmail: 'support@buzzstyle.work',
     },
     faq: {
       title: 'Frequently Asked Questions',
@@ -139,7 +139,7 @@ const translations = {
       q7: 'How do I get a refund?',
       a7: 'If you\'re not satisfied with our Premium service, you can request a refund within 24 hours of purchase if you haven\'t used the service. Please refer to our Refund Policy for complete details.',
       q8: 'How can I contact support?',
-      a8: 'You can reach our support team at support@styleai.com or use the Partnership Inquiry form on our website. We typically respond within 24-48 hours.',
+      a8: 'You can reach our support team at support@buzzstyle.work or use the Partnership Inquiry form on our website. We typically respond within 24-48 hours.',
       stillHaveQuestions: 'Still have questions?',
       contactUs: 'Contact our support team',
     },
@@ -190,7 +190,7 @@ We use third-party services to provide core functionality, analytics, comments, 
 We reserve the right to modify these terms at any time. Continued use of the Service after changes constitutes acceptance of the new terms.
 
 9. Contact
-For questions about these Terms, please contact us at support@styleai.com.
+For questions about these Terms, please contact us at support@buzzstyle.work.
       `,
     },
     privacy: {
@@ -241,7 +241,7 @@ We use essential cookies to provide our Service. By using our Service, you conse
 Our Service is not intended for users under 18 years of age. We do not knowingly collect information from children.
 
 8. Contact
-For privacy-related inquiries, please contact us at privacy@styleai.com.
+For privacy-related inquiries, please contact us at privacy@buzzstyle.work.
       `,
     },
     refund: {
@@ -265,7 +265,7 @@ Refunds will not be provided if:
 
 4. How to Request a Refund
 To request a refund:
-1. Email us at refunds@styleai.com
+1. Email us at refunds@buzzstyle.work
 2. Include your order ID and reason for the refund request
 3. We will review your request within 3 business days
 
@@ -273,7 +273,7 @@ To request a refund:
 Approved refunds will be processed within 5-10 business days and will be credited to your original payment method.
 
 6. Contact
-For refund-related questions, please contact refunds@styleai.com.
+For refund-related questions, please contact refunds@buzzstyle.work.
       `,
     },
     form: {
@@ -500,7 +500,7 @@ For refund-related questions, please contact refunds@styleai.com.
       value3Text: 'AI가 지속적으로 학습하여 더 나은 추천을 제공합니다.',
       contact: '문의하기',
       contactText: '질문이나 피드백이 있으신가요? 언제든지 연락해 주세요.',
-      contactEmail: 'support@styleai.com',
+      contactEmail: 'support@buzzstyle.work',
     },
     faq: {
       title: '자주 묻는 질문',
@@ -520,7 +520,7 @@ For refund-related questions, please contact refunds@styleai.com.
       q7: '환불은 어떻게 받나요?',
       a7: '프리미엄 서비스에 만족하지 않으시면 구매 후 24시간 이내, 서비스 사용 전에 환불을 요청할 수 있습니다. 자세한 내용은 환불정책을 확인하세요.',
       q8: '고객지원에 어떻게 연락하나요?',
-      a8: 'support@styleai.com으로 이메일을 보내거나 웹사이트의 제휴문의 양식을 이용하세요. 보통 24-48시간 이내에 답변드립니다.',
+      a8: 'support@buzzstyle.work으로 이메일을 보내거나 웹사이트의 제휴문의 양식을 이용하세요. 보통 24-48시간 이내에 답변드립니다.',
       stillHaveQuestions: '아직 궁금한 점이 있으신가요?',
       contactUs: '고객지원팀에 문의하기',
     },
@@ -571,7 +571,7 @@ StyleAI는 정보 제공 목적으로만 추천을 제공합니다. 당사의 �
 당사는 언제든지 본 약관을 수정할 권리를 보유합니다. 변경 후 서비스를 계속 이용하면 새로운 약관에 동의한 것으로 간주됩니다.
 
 9. 문의
-본 약관에 관한 질문은 support@styleai.com으로 문의해 주세요.
+본 약관에 관한 질문은 support@buzzstyle.work으로 문의해 주세요.
       `,
     },
     privacy: {
@@ -622,7 +622,7 @@ StyleAI는 정보 제공 목적으로만 추천을 제공합니다. 당사의 �
 저희 서비스는 18세 미만 사용자를 대상으로 하지 않습니다. 아동으로부터 의도적으로 정보를 수집하지 않습니다.
 
 8. 문의
-개인정보 관련 문의는 privacy@styleai.com으로 연락해 주세요.
+개인정보 관련 문의는 privacy@buzzstyle.work으로 연락해 주세요.
       `,
     },
     refund: {
@@ -646,7 +646,7 @@ StyleAI는 구매 즉시 제공되는 디지털 서비스입니다. AI가 생성
 
 4. 환불 요청 방법
 환불을 요청하려면:
-1. refunds@styleai.com으로 이메일 보내기
+1. refunds@buzzstyle.work으로 이메일 보내기
 2. 주문 ID와 환불 요청 사유 포함
 3. 영업일 기준 3일 이내에 검토
 
@@ -654,7 +654,7 @@ StyleAI는 구매 즉시 제공되는 디지털 서비스입니다. AI가 생성
 승인된 환불은 영업일 기준 5-10일 이내에 처리되며 원래 결제 수단으로 환불됩니다.
 
 6. 문의
-환불 관련 질문은 refunds@styleai.com으로 연락해 주세요.
+환불 관련 질문은 refunds@buzzstyle.work으로 연락해 주세요.
       `,
     },
     form: {
@@ -1031,14 +1031,41 @@ function AnimalTestPage({ t, lang, navigateTo, LanguageSelector }: AnimalTestPag
     return model
   }
 
+  const compressAnimalTestImage = async (dataUrl: string, maxWidth = 512, maxHeight = 512, quality = 0.75) => {
+    return await new Promise<string>((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        let { width, height } = img
+        const scale = Math.min(1, maxWidth / width, maxHeight / height)
+        width = Math.round(width * scale)
+        height = Math.round(height * scale)
+
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(dataUrl)
+          return
+        }
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.onerror = () => resolve(dataUrl)
+      img.src = dataUrl
+    })
+  }
+
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       setError(null)
       setImageLoaded(false)
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setTestPhoto(reader.result as string)
+      reader.onloadend = async () => {
+        const raw = reader.result as string
+        const compressed = await compressAnimalTestImage(raw)
+        setTestPhoto(compressed)
         setResult(null)
       }
       reader.readAsDataURL(file)
@@ -1235,6 +1262,28 @@ function AnimalTestPage({ t, lang, navigateTo, LanguageSelector }: AnimalTestPag
                 <img src={testPhoto} alt="Your photo" className="w-full h-64 object-cover" />
               </div>
             )}
+
+            {/* Premium CTA */}
+            <div className="glass-panel rounded-2xl p-6 text-center">
+              <h3 className="text-white text-xl font-bold mb-2">
+                {lang === 'ko' ? '프리미엄 분석 받기' : 'Get Premium Analysis'}
+              </h3>
+              <p className="text-white/60 text-sm mb-4">
+                {lang === 'ko'
+                  ? '더 정확한 스타일 리포트와 맞춤형 추천을 받아보세요.'
+                  : 'Unlock a detailed style report and personalized recommendations.'}
+              </p>
+              <button
+                onClick={() => navigateTo('subscription')}
+                className="inline-flex items-center justify-center rounded-xl h-12 px-8 bg-primary text-background-dark font-bold tracking-tight hover:brightness-110 transition-all shadow-lg"
+              >
+                <span className="material-symbols-outlined mr-2">workspace_premium</span>
+                {lang === 'ko' ? '프리미엄 분석 받기' : 'Get Premium Analysis'}
+              </button>
+              <p className="text-[11px] text-white/40 uppercase tracking-widest font-bold mt-2">
+                {t.subscription.pricing.trial}
+              </p>
+            </div>
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
@@ -2213,7 +2262,7 @@ Thank you for using StyleAI!`
               </p>
               <div className="reveal reveal-3 flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={() => navigateTo('animal-test')}
+                  onClick={() => navigateTo('form')}
                   className="flex items-center justify-center rounded-2xl h-14 px-8 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20"
                 >
                   {t.hero.cta}
@@ -2375,23 +2424,6 @@ Thank you for using StyleAI!`
                 </div>
               </div>
             </div>
-          </section>
-
-          {/* Email Test Section */}
-          <section className="px-6 py-16 max-w-md mx-auto">
-            <div className="glass-panel rounded-3xl p-6 text-center">
-              <span className="material-symbols-outlined text-primary text-4xl mb-4">mail</span>
-              <h3 className="text-white text-xl font-bold mb-2">{t.emailTest.title}</h3>
-              <p className="text-white/60 text-sm mb-4">{t.emailTest.description}</p>
-              <button
-                onClick={() => openEmailPanel(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl h-12 px-6 bg-primary text-background-dark font-bold hover:brightness-110 transition-all"
-              >
-                <span className="material-symbols-outlined text-[20px]">send</span>
-                {t.emailTest.button}
-              </button>
-            </div>
-            {showEmailModal && <EmailPanel />}
           </section>
 
           {/* Comments Section */}

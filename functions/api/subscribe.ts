@@ -19,8 +19,9 @@ const allowedOrigins = [
   'http://127.0.0.1:4173',
 ];
 
-const getCorsHeaders = (origin: string | null) => {
-  if (!origin || !allowedOrigins.includes(origin)) {
+const getCorsHeaders = (origin: string | null, isSandbox = false) => {
+  const isPreview = origin ? origin.endsWith('.pages.dev') : false;
+  if (!origin || (!allowedOrigins.includes(origin) && !(isSandbox && isPreview))) {
     return null;
   }
   return {
@@ -40,8 +41,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       email?: string;
     };
 
+    const isSandbox = env.POLAR_ENV === 'sandbox';
     const origin = request.headers.get('Origin') || body.origin || null;
-    const corsHeaders = getCorsHeaders(origin);
+    const corsHeaders = getCorsHeaders(origin, isSandbox);
     if (!corsHeaders) {
       return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
         status: 403,
@@ -96,7 +98,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const isSandbox = env.POLAR_ENV === 'sandbox';
-    if (isSandbox && !origin?.startsWith('http://localhost') && !origin?.startsWith('http://127.0.0.1')) {
+    const sandboxAllowed = origin?.startsWith('http://localhost')
+      || origin?.startsWith('http://127.0.0.1')
+      || origin?.endsWith('.pages.dev');
+    if (isSandbox && !sandboxAllowed) {
       return new Response(JSON.stringify({ error: 'Sandbox mode is only allowed from localhost.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
