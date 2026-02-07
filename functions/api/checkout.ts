@@ -66,8 +66,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       }
     }
 
-    // Use the validated Origin header to prevent open-redirects.
-    const successUrl = `${origin}/payment-success`;
+    // Use a query param to avoid SPA 404s on refresh.
+    const successUrl = `${origin}/?payment=success`;
 
     const isSandbox = env.POLAR_ENV === 'sandbox';
     if (isSandbox && !origin?.startsWith('http://localhost') && !origin?.startsWith('http://127.0.0.1')) {
