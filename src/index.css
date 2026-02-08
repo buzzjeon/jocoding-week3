@@ -11,6 +11,10 @@ body {
   color: #e9eef3;
 }
 
+main {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 8rem) !important;
+}
+
 a {
   color: inherit;
 }

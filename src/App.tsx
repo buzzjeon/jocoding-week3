@@ -1197,7 +1197,7 @@ function AnimalTestPage({ t, lang, navigateTo, LanguageSelector }: AnimalTestPag
         </div>
       </nav>
 
-      <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto">
+      <main className="pt-28 pb-12 px-6 max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <span className="text-5xl">🐶</span>
@@ -2319,7 +2319,7 @@ Thank you for using StyleAI!`
           className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
           aria-label="Open menu"
         >
-          <span className="material-symbols-outlined text-[22px] text-white/80">more_horiz</span>
+          <span className="material-symbols-outlined text-[22px] text-white/80">menu</span>
         </button>
         {open && (
           <div className="absolute left-0 top-12 bg-background-dark/95 border border-white/10 rounded-2xl shadow-2xl min-w-[240px] overflow-hidden z-50 backdrop-blur">
@@ -2440,7 +2440,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="relative z-10 pt-24 max-w-6xl mx-auto pb-24 lg:pb-12">
+        <main className="relative z-10 pt-28 max-w-6xl mx-auto pb-24 lg:pb-12">
           {/* Hero Section */}
           <section className="relative min-h-[80vh] lg:min-h-[90vh] grid lg:grid-cols-[1.1fr_0.9fr] items-center gap-10 px-6">
             {/* Content */}
@@ -2676,7 +2676,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto">
+        <main className="pt-28 pb-12 px-6 max-w-2xl mx-auto">
           <div className="mb-8 text-center lg:text-left">
             <h1 className="text-white text-3xl lg:text-4xl font-bold mb-2">{t.form.title}</h1>
             <p className="text-white/60 lg:text-lg">{t.form.description}</p>
@@ -2839,7 +2839,7 @@ Thank you for using StyleAI!`
         </div>
       </nav>
 
-      <main className="pt-24 pb-12 px-6 max-w-3xl mx-auto">
+      <main className="pt-28 pb-12 px-6 max-w-3xl mx-auto">
         <div className="mb-8">
           <h1 className="text-white text-3xl lg:text-4xl font-bold mb-2">{title}</h1>
           <p className="text-white/40 text-sm">{lastUpdated}</p>
@@ -2898,7 +2898,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto">
+        <main className="pt-28 pb-12 px-6 max-w-2xl mx-auto">
           <h1 className="text-white text-3xl lg:text-4xl font-bold mb-4">{t.partnership.title}</h1>
           <p className="text-white/60 lg:text-lg mb-8">{t.partnership.description}</p>
 
@@ -2924,7 +2924,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-4xl mx-auto">
+        <main className="pt-28 pb-12 px-6 max-w-4xl mx-auto">
           {/* Hero Section */}
           <div className="text-center mb-16">
             <h1 className="text-white text-4xl lg:text-5xl font-bold mb-4">{t.about.title}</h1>
@@ -3016,7 +3016,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-3xl mx-auto">
+        <main className="pt-28 pb-12 px-6 max-w-3xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-white text-4xl lg:text-5xl font-bold mb-4">{t.faq.title}</h1>
             <p className="text-white/60 text-lg">{t.faq.subtitle}</p>
@@ -3080,7 +3080,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[80vh]">
+        <main className="pt-28 pb-12 px-6 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[80vh]">
           <div className="text-center">
             {/* Success Icon */}
             <div className="w-24 h-24 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-8">
@@ -3120,7 +3120,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-md mx-auto flex flex-col items-center justify-center min-h-[80vh]">
+        <main className="pt-28 pb-12 px-6 max-w-md mx-auto flex flex-col items-center justify-center min-h-[80vh]">
           <div className="w-full">
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
@@ -3231,7 +3231,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-md mx-auto flex flex-col items-center justify-center min-h-[80vh]">
+        <main className="pt-28 pb-12 px-6 max-w-md mx-auto flex flex-col items-center justify-center min-h-[80vh]">
           <div className="w-full">
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
@@ -3346,7 +3346,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-md mx-auto flex flex-col items-center justify-center min-h-[80vh]">
+        <main className="pt-28 pb-12 px-6 max-w-md mx-auto flex flex-col items-center justify-center min-h-[80vh]">
           <div className="w-full">
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
@@ -3415,7 +3415,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-md mx-auto flex flex-col items-center justify-center min-h-[80vh]">
+        <main className="pt-28 pb-12 px-6 max-w-md mx-auto flex flex-col items-center justify-center min-h-[80vh]">
           <div className="w-full">
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
@@ -3488,7 +3488,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-4xl mx-auto">
+        <main className="pt-28 pb-12 px-6 max-w-4xl mx-auto">
           {/* Hero */}
           <div className="text-center mb-12">
             <span className="inline-block px-4 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium mb-4">
@@ -3608,7 +3608,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[80vh]">
+        <main className="pt-28 pb-12 px-6 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[80vh]">
           <div className="text-center">
             <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-8">
               <span className="material-symbols-outlined text-primary text-[48px]">celebration</span>
@@ -3666,7 +3666,7 @@ Thank you for using StyleAI!`
           </div>
         </nav>
 
-        <main className="pt-24 pb-12 px-6 max-w-2xl mx-auto">
+        <main className="pt-28 pb-12 px-6 max-w-2xl mx-auto">
           <div className="mb-8 text-center">
             <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
               <span className="material-symbols-outlined text-primary text-[40px]">person</span>
@@ -3822,7 +3822,7 @@ Thank you for using StyleAI!`
         </div>
       </nav>
 
-      <main className="pt-24 pb-12 px-6 max-w-4xl mx-auto">
+      <main className="pt-28 pb-12 px-6 max-w-4xl mx-auto">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="text-center lg:text-left">
             <h1 className="text-white text-3xl lg:text-4xl font-bold mb-2">{t.result.title}</h1>
