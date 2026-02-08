@@ -2072,11 +2072,6 @@ function App() {
     }
   }
 
-  const handleShare = async () => {
-    // Sharing disabled: results are dynamic and not reproducible via URL.
-    return
-  }
-
   const handleSendEmail = async () => {
     // 이메일 유효성 검사
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
