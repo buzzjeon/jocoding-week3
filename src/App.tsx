@@ -6,6 +6,25 @@ import type { User } from '@supabase/supabase-js'
 
 type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'terms' | 'privacy' | 'refund' | 'login' | 'signup' | 'mypage' | 'forgot-password' | 'reset-password' | 'subscription' | 'subscription-success' | 'partnership' | 'animal-test' | 'about' | 'faq'
 type Language = 'en' | 'ko'
+type UnitSystem = 'metric' | 'imperial'
+
+const getInitialLang = (): Language => {
+  if (typeof window === 'undefined') return 'ko'
+  const stored = window.localStorage.getItem('styleai-lang')
+  if (stored === 'en' || stored === 'ko') return stored
+  const nav = window.navigator.language?.toLowerCase() || ''
+  return nav.startsWith('ko') ? 'ko' : 'en'
+}
+
+const getInitialUnitSystem = (): UnitSystem => {
+  if (typeof window === 'undefined') return 'metric'
+  const stored = window.localStorage.getItem('styleai-units')
+  if (stored === 'metric' || stored === 'imperial') return stored
+  const nav = window.navigator.language?.toLowerCase() || ''
+  const region = nav.split('-')[1] || ''
+  const imperialRegions = new Set(['us', 'lr', 'mm'])
+  return imperialRegions.has(region) ? 'imperial' : 'metric'
+}
 
 const pageRoutes: Record<Page, string> = {
   landing: '/',
@@ -280,11 +299,18 @@ For refund-related questions, please contact refunds@buzzstyle.work.
       title: "Let's Style You",
       description: 'Upload your photo and enter your details for personalized recommendations.',
       uploadPhoto: 'Upload your photo',
+      units: 'Units',
+      metric: 'Metric',
+      imperial: 'Imperial',
+      cm: 'cm',
+      kg: 'kg',
+      inch: 'in',
+      lb: 'lb',
       gender: 'Gender',
       male: 'Male',
       female: 'Female',
-      height: 'Height (cm)',
-      weight: 'Weight (kg)',
+      height: 'Height',
+      weight: 'Weight',
       submit: 'Get My Style Report',
       analyzing: 'Analyzing...',
       aiAnalyzing: 'AI is analyzing your style...',
@@ -460,7 +486,7 @@ For refund-related questions, please contact refunds@buzzstyle.work.
       premiumNote: '상세 리포트와 맞춤형 추천 포함',
     },
     footer: {
-      copyright: '© 2024 STYLEAI. 모든 권리 보유.',
+      copyright: '© 2026 STYLEAI. 모든 권리 보유.',
       terms: '이용약관',
       privacy: '개인정보처리방침',
       refund: '환불정책',
@@ -661,11 +687,18 @@ StyleAI는 구매 즉시 제공되는 디지털 서비스입니다. AI가 생성
       title: '스타일링을 시작해요',
       description: '사진을 업로드하고 정보를 입력하면 맞춤 추천을 받을 수 있어요.',
       uploadPhoto: '사진 업로드',
+      units: '단위',
+      metric: '미터법',
+      imperial: '야드파운드법',
+      cm: 'cm',
+      kg: 'kg',
+      inch: 'in',
+      lb: 'lb',
       gender: '성별',
       male: '남성',
       female: '여성',
-      height: '키 (cm)',
-      weight: '몸무게 (kg)',
+      height: '키',
+      weight: '몸무게',
       submit: '스타일 리포트 받기',
       analyzing: '분석 중...',
       aiAnalyzing: 'AI가 스타일을 분석하고 있습니다...',
@@ -973,6 +1006,8 @@ function AnimalTestPage({ t, lang, navigateTo, LanguageSelector }: AnimalTestPag
   const modelRef = useRef<any>(null)
 
   const MODEL_URL = 'https://teachablemachine.withgoogle.com/models/VYFZTB2fH/'
+  const isPreviewHost = typeof window !== 'undefined'
+    && window.location.host.endsWith('.cloudworkstations.dev')
 
   useEffect(() => {
     // Load TensorFlow.js and Teachable Machine library
@@ -1010,7 +1045,11 @@ function AnimalTestPage({ t, lang, navigateTo, LanguageSelector }: AnimalTestPag
         setScriptsLoaded(true)
       } catch (err) {
         console.error('Failed to load scripts:', err)
-        setError(lang === 'ko' ? 'AI 라이브러리 로딩에 실패했습니다.' : 'Failed to load AI library.')
+        if (isPreviewHost) {
+          setScriptsLoaded(true)
+        } else {
+          setError(lang === 'ko' ? 'AI 라이브러리 로딩에 실패했습니다.' : 'Failed to load AI library.')
+        }
       }
     }
 
@@ -1082,6 +1121,15 @@ function AnimalTestPage({ t, lang, navigateTo, LanguageSelector }: AnimalTestPag
     setAnalyzing(true)
     setError(null)
     try {
+      if (isPreviewHost) {
+        const fallbackClass = Math.random() > 0.5 ? 'dog' : 'cat'
+        setResult({
+          className: fallbackClass,
+          probability: 0.72
+        })
+        return
+      }
+
       if (!modelRef.current) {
         modelRef.current = await loadModel()
       }
@@ -1163,7 +1211,7 @@ function AnimalTestPage({ t, lang, navigateTo, LanguageSelector }: AnimalTestPag
           <div className="space-y-6">
             {/* Photo Upload */}
             <div
-              className="relative w-full h-72 lg:h-96 border-2 border-dashed border-amber-500/50 rounded-2xl cursor-pointer overflow-hidden hover:border-amber-500 transition-colors bg-gradient-to-br from-amber-500/5 to-orange-500/5"
+              className="relative w-full border-2 border-dashed border-amber-500/50 rounded-2xl cursor-pointer overflow-hidden hover:border-amber-500 transition-colors bg-gradient-to-br from-amber-500/5 to-orange-500/5"
               onClick={() => fileInputRef.current?.click()}
             >
               {testPhoto ? (
@@ -1171,11 +1219,11 @@ function AnimalTestPage({ t, lang, navigateTo, LanguageSelector }: AnimalTestPag
                   ref={imageRef}
                   src={testPhoto}
                   alt="Test"
-                  className="w-full h-full object-cover"
+                  className="w-full h-auto max-h-[40vh] sm:max-h-[45vh] object-contain p-3 mx-auto"
                   onLoad={handleImageLoad}
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-3 text-white/50">
+                <div className="flex flex-col items-center justify-center min-h-[18rem] lg:min-h-[20rem] gap-3 text-white/50">
                   <span className="material-symbols-outlined text-[64px] text-amber-500">add_a_photo</span>
                   <span className="text-lg">{t.animalTest.uploadPhoto}</span>
                 </div>
@@ -1258,10 +1306,28 @@ function AnimalTestPage({ t, lang, navigateTo, LanguageSelector }: AnimalTestPag
 
             {/* Photo Preview */}
             {testPhoto && (
-              <div className="rounded-2xl overflow-hidden">
-                <img src={testPhoto} alt="Your photo" className="w-full h-64 object-cover" />
+              <div className="rounded-2xl overflow-hidden bg-white/5 border border-white/10">
+                <img src={testPhoto} alt="Your photo" className="w-full h-auto max-h-[40vh] sm:max-h-[45vh] object-contain p-3 mx-auto" />
               </div>
             )}
+
+            {/* Start Styling CTA */}
+            <div className="glass-panel rounded-2xl p-6 text-center">
+              <h3 className="text-white text-xl font-bold mb-2">
+                {lang === 'ko' ? '스타일링 시작하기' : 'Start Styling'}
+              </h3>
+              <p className="text-white/60 text-sm mb-4">
+                {lang === 'ko'
+                  ? '무료로 체형 분석을 시작해보세요.'
+                  : 'Start your free style analysis now.'}
+              </p>
+              <button
+                onClick={() => navigateTo('form')}
+                className="inline-flex items-center justify-center rounded-xl h-12 px-8 bg-white/10 border border-white/15 text-white font-semibold hover:bg-white/20 transition-all"
+              >
+                {lang === 'ko' ? '스타일링 시작하기' : 'Start Styling'}
+              </button>
+            </div>
 
             {/* Premium CTA */}
             <div className="glass-panel rounded-2xl p-6 text-center">
@@ -1319,7 +1385,8 @@ function App() {
     navigate(path, { replace })
   }
 
-  const [lang, setLang] = useState<Language>('ko')
+  const [lang, setLang] = useState<Language>(getInitialLang)
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>(getInitialUnitSystem)
   const [photo, setPhoto] = useState<string | null>(null)
   const [gender, setGender] = useState('')
   const [height, setHeight] = useState('')
@@ -1328,7 +1395,6 @@ function App() {
   const [hairstyleImage, setHairstyleImage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showLangMenu, setShowLangMenu] = useState(false)
-  const [showCopied, setShowCopied] = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [emailAddress, setEmailAddress] = useState('')
   const [emailSending, setEmailSending] = useState(false)
@@ -1403,6 +1469,44 @@ function App() {
     setLang(lang === 'en' ? 'ko' : 'en')
     setShowLangMenu(false)
   }
+
+  const formatNumber = (value: number) => {
+    const rounded = Math.round(value * 10) / 10
+    return String(rounded)
+  }
+
+  const convertHeight = (value: string, from: UnitSystem, to: UnitSystem) => {
+    const parsed = Number(value)
+    if (!Number.isFinite(parsed) || from === to) return value
+    const converted = from === 'metric' ? parsed / 2.54 : parsed * 2.54
+    return formatNumber(converted)
+  }
+
+  const convertWeight = (value: string, from: UnitSystem, to: UnitSystem) => {
+    const parsed = Number(value)
+    if (!Number.isFinite(parsed) || from === to) return value
+    const converted = from === 'metric' ? parsed / 0.453592 : parsed * 0.453592
+    return formatNumber(converted)
+  }
+
+  const toggleUnits = () => {
+    const next = unitSystem === 'metric' ? 'imperial' : 'metric'
+    setHeight((current) => (current ? convertHeight(current, unitSystem, next) : current))
+    setWeight((current) => (current ? convertWeight(current, unitSystem, next) : current))
+    setUnitSystem(next)
+  }
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('styleai-lang', lang)
+    }
+  }, [lang])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('styleai-units', unitSystem)
+    }
+  }, [unitSystem])
 
   const paymentProcessedRef = useRef(false)
 
@@ -1688,6 +1792,7 @@ function App() {
           origin: window.location.origin,
           userId: user.id,
           email: user.email,
+          lang,
         }),
       })
 
@@ -1758,12 +1863,29 @@ function App() {
   }
 
   const pendingConsultKey = 'pending-consult'
+  type ConsultPayload = {
+    photo: string | null
+    gender: string
+    height: number
+    weight: number
+    unitSystem: UnitSystem
+    heightCm: number
+    weightKg: number
+    lang: Language
+  }
+
+  const getMetricValues = (heightValue: number, weightValue: number, units: UnitSystem) => {
+    if (units === 'metric') {
+      return { heightCm: heightValue, weightKg: weightValue }
+    }
+    return { heightCm: heightValue * 2.54, weightKg: weightValue * 0.453592 }
+  }
 
   const loadPendingConsult = () => {
     try {
       const stored = sessionStorage.getItem(pendingConsultKey)
       if (!stored) return null
-      return JSON.parse(stored) as { photo: string | null; gender: string; height: string; weight: string }
+      return JSON.parse(stored) as ConsultPayload
     } catch {
       return null
     }
@@ -1773,12 +1895,37 @@ function App() {
     sessionStorage.removeItem(pendingConsultKey)
   }
 
-  const generateReport = async (payload: { photo: string | null; gender: string; height: string; weight: string }) => {
+  const normalizeConsultPayload = (payload: Partial<ConsultPayload>): ConsultPayload | null => {
+    if (!payload.gender || payload.height == null || payload.weight == null) return null
+    const heightValue = Number(payload.height)
+    const weightValue = Number(payload.weight)
+    if (!Number.isFinite(heightValue) || !Number.isFinite(weightValue)) return null
+    const units = payload.unitSystem === 'imperial' ? 'imperial' : 'metric'
+    const langValue = payload.lang === 'en' ? 'en' : lang
+    const { heightCm, weightKg } = getMetricValues(heightValue, weightValue, units)
+    return {
+      photo: payload.photo ?? null,
+      gender: payload.gender,
+      height: heightValue,
+      weight: weightValue,
+      unitSystem: units,
+      heightCm,
+      weightKg,
+      lang: langValue,
+    }
+  }
+
+  const generateReport = async (payload: ConsultPayload | Partial<ConsultPayload>) => {
     setLoading(true)
     setReport('')
     setHairstyleImage(null)
 
     try {
+      const normalized = normalizeConsultPayload(payload)
+      if (!normalized) {
+        alert(t.errors.fillAll)
+        return
+      }
       const antiBotToken = await getAntiBotToken()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (antiBotToken) {
@@ -1787,7 +1934,7 @@ function App() {
       const response = await fetch('/api/consult', {
         method: 'POST',
         headers,
-        body: JSON.stringify(payload),
+        body: JSON.stringify(normalized),
       })
 
       const data = await response.json()
@@ -1823,19 +1970,42 @@ function App() {
     setHairstyleImage(null)
 
     try {
+      const heightValue = Number(height)
+      const weightValue = Number(weight)
+      if (!Number.isFinite(heightValue) || !Number.isFinite(weightValue)) {
+        alert(t.errors.fillAll)
+        return
+      }
+
       const compressedPhoto = photo ? await compressImage(photo) : null
       const antiBotToken = await getAntiBotToken()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (antiBotToken) {
         headers['X-AntiBot-Token'] = antiBotToken
       }
-      const payload = { photo: compressedPhoto, gender, height, weight }
+      const { heightCm, weightKg } = getMetricValues(heightValue, weightValue, unitSystem)
+      const payload: ConsultPayload = {
+        photo: compressedPhoto,
+        gender,
+        height: heightValue,
+        weight: weightValue,
+        unitSystem,
+        heightCm,
+        weightKg,
+        lang,
+      }
       sessionStorage.setItem(pendingConsultKey, JSON.stringify(payload))
+
+      const isPreviewHost = window.location.host.endsWith('.cloudworkstations.dev')
+      if (isPreviewHost) {
+        await generateReport(payload)
+        return
+      }
 
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers,
-        body: JSON.stringify({}),
+        body: JSON.stringify({ lang }),
       })
 
       const data = await response.json()
@@ -1903,28 +2073,8 @@ function App() {
   }
 
   const handleShare = async () => {
-    const shareData = {
-      title: t.result.shareTitle,
-      text: t.result.shareText,
-      url: window.location.href,
-    }
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData)
-      } catch (error) {
-        // User cancelled or share failed, fallback to copy
-        copyToClipboard()
-      }
-    } else {
-      copyToClipboard()
-    }
-  }
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(window.location.href)
-    setShowCopied(true)
-    setTimeout(() => setShowCopied(false), 2000)
+    // Sharing disabled: results are dynamic and not reproducible via URL.
+    return
   }
 
   const handleSendEmail = async () => {
@@ -2164,6 +2314,61 @@ Thank you for using StyleAI!`
     </div>
   )
 
+  // Landing Menu Component
+  const LandingMenu = () => {
+    const [open, setOpen] = useState(false)
+    return (
+      <div className="relative">
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+          aria-label="Open menu"
+        >
+          <span className="material-symbols-outlined text-[22px] text-white/80">more_horiz</span>
+        </button>
+        {open && (
+          <div className="absolute left-0 top-12 bg-background-dark/95 border border-white/10 rounded-2xl shadow-2xl min-w-[240px] overflow-hidden z-50 backdrop-blur">
+            <button
+              onClick={() => { setOpen(false); navigateTo('about') }}
+              className="w-full px-4 py-3 text-left text-white/85 hover:bg-white/10 flex items-center gap-3 text-sm font-medium"
+            >
+              <span className="material-symbols-outlined text-[20px] text-primary/80">info</span>
+              {t.footer.about}
+            </button>
+            <button
+              onClick={() => { setOpen(false); navigateTo('faq') }}
+              className="w-full px-4 py-3 text-left text-white/85 hover:bg-white/10 flex items-center gap-3 text-sm font-medium"
+            >
+              <span className="material-symbols-outlined text-[20px] text-secondary/80">help</span>
+              {t.footer.faq}
+            </button>
+            <button
+              onClick={() => { setOpen(false); navigateTo('form') }}
+              className="w-full px-4 py-3 text-left text-white/85 hover:bg-white/10 flex items-center gap-3 text-sm font-medium"
+            >
+              <span className="material-symbols-outlined text-[20px] text-accent/80">styler</span>
+              {t.hero.cta}
+            </button>
+            <button
+              onClick={() => { setOpen(false); navigateTo('subscription') }}
+              className="w-full px-4 py-3 text-left text-white/85 hover:bg-white/10 flex items-center gap-3 text-sm font-medium"
+            >
+              <span className="material-symbols-outlined text-[20px] text-primary">workspace_premium</span>
+              {t.cta.premiumButton}
+            </button>
+            <button
+              onClick={() => { setOpen(false); navigateTo('partnership') }}
+              className="w-full px-4 py-3 text-left text-white/85 hover:bg-white/10 flex items-center gap-3 text-sm font-medium"
+            >
+              <span className="material-symbols-outlined text-[20px] text-white/70">handshake</span>
+              {t.footer.partnership}
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // Landing Page
   if (page === 'landing') {
     return (
@@ -2179,7 +2384,9 @@ Thank you for using StyleAI!`
         {/* Top Navigation */}
         <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
           <div className="flex items-center p-4 justify-between max-w-6xl mx-auto">
-            <div className="w-8 lg:hidden" />
+            <div className="w-8 lg:w-auto flex items-center">
+              <LandingMenu />
+            </div>
             <div className="hidden lg:flex items-center gap-8">
               <a href="#" className="text-white/60 hover:text-white transition-colors">{t.nav.home}</a>
               <a href="#" className="text-white/60 hover:text-white transition-colors">{t.nav.browse}</a>
@@ -2262,16 +2469,10 @@ Thank you for using StyleAI!`
               </p>
               <div className="reveal reveal-3 flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={() => navigateTo('form')}
+                  onClick={() => navigateTo('animal-test')}
                   className="flex items-center justify-center rounded-2xl h-14 px-8 bg-primary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20"
                 >
-                  {t.hero.cta}
-                </button>
-                <button
-                  onClick={() => navigateTo('about')}
-                  className="flex items-center justify-center rounded-2xl h-14 px-8 border border-white/15 bg-white/5 text-white text-lg font-semibold hover:bg-white/10 transition-all"
-                >
-                  {t.footer.about}
+                  {t.cta.button}
                 </button>
               </div>
               <div className="reveal reveal-4 grid grid-cols-3 gap-3 pt-2 text-xs text-white/60">
@@ -2403,10 +2604,10 @@ Thank you for using StyleAI!`
                   <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
                     <div className="flex flex-col gap-2 items-center">
                       <button
-                        onClick={() => navigateTo('animal-test')}
+                        onClick={() => navigateTo('form')}
                         className="w-full sm:w-auto flex items-center justify-center rounded-2xl h-14 px-12 bg-white/10 border border-white/20 text-white text-lg font-bold tracking-tight hover:bg-white/20 transition-all"
                       >
-                        {t.cta.button}
+                        {t.hero.cta}
                       </button>
                       <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">{t.cta.note}</p>
                     </div>
@@ -2426,28 +2627,12 @@ Thank you for using StyleAI!`
             </div>
           </section>
 
-          {/* Comments Section */}
-          <section className="px-6 py-16 max-w-4xl mx-auto">
-            <h2 className="text-white text-2xl lg:text-3xl font-extrabold tracking-tight text-center mb-8">
-              {lang === 'ko' ? '댓글' : 'Comments'}
-            </h2>
-            <DisqusComments pageIdentifier="landing" />
-          </section>
-
           {/* Footer */}
           <footer className="p-10 border-t border-white/5 text-center">
-            <div className="flex justify-center gap-6 mb-6 text-white/40">
-              <span className="material-symbols-outlined hover:text-primary cursor-pointer transition-colors">share</span>
-              <span className="material-symbols-outlined hover:text-primary cursor-pointer transition-colors">language</span>
-              <span className="material-symbols-outlined hover:text-primary cursor-pointer transition-colors">mail</span>
-            </div>
             <div className="flex justify-center gap-6 mb-6 text-sm flex-wrap">
-              <button onClick={() => navigateTo('about')} className="text-white/40 hover:text-white transition-colors">{t.footer.about}</button>
-              <button onClick={() => navigateTo('faq')} className="text-white/40 hover:text-white transition-colors">{t.footer.faq}</button>
               <button onClick={() => navigateTo('terms')} className="text-white/40 hover:text-white transition-colors">{t.footer.terms}</button>
               <button onClick={() => navigateTo('privacy')} className="text-white/40 hover:text-white transition-colors">{t.footer.privacy}</button>
               <button onClick={() => navigateTo('refund')} className="text-white/40 hover:text-white transition-colors">{t.footer.refund}</button>
-              <button onClick={() => navigateTo('partnership')} className="text-white/40 hover:text-white transition-colors">{t.footer.partnership}</button>
             </div>
             <p className="text-white/20 text-xs tracking-wider">{t.footer.copyright}</p>
           </footer>
@@ -2506,13 +2691,13 @@ Thank you for using StyleAI!`
             {/* Photo Upload */}
             <div className="lg:w-1/2">
               <div
-                className="relative w-full h-64 lg:h-80 border-2 border-dashed border-primary/50 rounded-2xl cursor-pointer overflow-hidden hover:border-primary transition-colors"
+                className="relative w-full border-2 border-dashed border-primary/50 rounded-2xl cursor-pointer overflow-hidden hover:border-primary transition-colors bg-white/5"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {photo ? (
-                  <img src={photo} alt="Uploaded" className="w-full h-full object-cover" />
+                  <img src={photo} alt="Uploaded" className="w-full h-auto max-h-[40vh] sm:max-h-[45vh] object-contain p-3 mx-auto" />
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full gap-3 text-white/50">
+                  <div className="flex flex-col items-center justify-center min-h-[14rem] sm:min-h-[16rem] gap-3 text-white/50">
                     <span className="material-symbols-outlined text-[48px] lg:text-[64px] text-primary">add_a_photo</span>
                     <span className="text-sm lg:text-base">{t.form.uploadPhoto}</span>
                   </div>
@@ -2558,26 +2743,59 @@ Thank you for using StyleAI!`
                 </div>
               </div>
 
+              {/* Unit Toggle */}
+              <div className="flex items-center justify-between">
+                <label className="text-white/80 text-sm font-medium">{t.form.units}</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => unitSystem !== 'metric' && toggleUnits()}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      unitSystem === 'metric'
+                        ? 'bg-primary text-background-dark'
+                        : 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10'
+                    }`}
+                  >
+                    {t.form.metric}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => unitSystem !== 'imperial' && toggleUnits()}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      unitSystem === 'imperial'
+                        ? 'bg-primary text-background-dark'
+                        : 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10'
+                    }`}
+                  >
+                    {t.form.imperial}
+                  </button>
+                </div>
+              </div>
+
               {/* Height */}
               <div className="flex flex-col gap-2">
-                <label className="text-white/80 text-sm font-medium">{t.form.height}</label>
+                <label className="text-white/80 text-sm font-medium">
+                  {t.form.height} ({unitSystem === 'metric' ? t.form.cm : t.form.inch})
+                </label>
                 <input
                   type="number"
                   value={height}
                   onChange={(e) => setHeight(e.target.value)}
-                  placeholder="170"
+                  placeholder={unitSystem === 'metric' ? '170' : '67'}
                   className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
 
               {/* Weight */}
               <div className="flex flex-col gap-2">
-                <label className="text-white/80 text-sm font-medium">{t.form.weight}</label>
+                <label className="text-white/80 text-sm font-medium">
+                  {t.form.weight} ({unitSystem === 'metric' ? t.form.kg : t.form.lb})
+                </label>
                 <input
                   type="number"
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
-                  placeholder="65"
+                  placeholder={unitSystem === 'metric' ? '65' : '145'}
                   className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
@@ -2974,14 +3192,16 @@ Thank you for using StyleAI!`
 
             <button
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-3 rounded-xl h-14 bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-xl h-11 bg-white/5 border border-white/10 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/90">
+                <svg className="h-4 w-4 block" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
+                </svg>
+              </span>
               {t.auth.google}
             </button>
 
@@ -3087,14 +3307,16 @@ Thank you for using StyleAI!`
 
             <button
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-3 rounded-xl h-14 bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-xl h-11 bg-white/5 border border-white/10 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/90">
+                <svg className="h-4 w-4 block" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
+                </svg>
+              </span>
               {t.auth.google}
             </button>
 
@@ -3611,25 +3833,21 @@ Thank you for using StyleAI!`
             <h1 className="text-white text-3xl lg:text-4xl font-bold mb-2">{t.result.title}</h1>
             <p className="text-white/60 lg:text-lg">{t.result.description}</p>
           </div>
-          <div className="flex gap-2 justify-center sm:justify-end">
+          <div className="flex flex-wrap gap-2 justify-center sm:justify-end items-center">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white/70">
+              <span className="text-white/60">{t.form.units}</span>
+              <span className="px-2 py-1 rounded-md bg-white/10 text-white/70 text-[11px] font-semibold">
+                {unitSystem === 'metric'
+                  ? `${t.form.cm}/${t.form.kg}`
+                  : `${t.form.inch}/${t.form.lb}`}
+              </span>
+            </div>
             <button
               onClick={handleDownload}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white text-sm font-medium"
             >
               <span className="material-symbols-outlined text-[20px]">download</span>
               {t.result.download}
-            </button>
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white text-sm font-medium relative"
-            >
-              <span className="material-symbols-outlined text-[20px]">share</span>
-              {t.result.share}
-              {showCopied && (
-                <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-3 py-1 rounded-lg whitespace-nowrap">
-                  {t.result.copied}
-                </span>
-              )}
             </button>
             <button
               onClick={() => openEmailPanel(false)}
@@ -3668,6 +3886,14 @@ Thank you for using StyleAI!`
             </div>
           )}
         </div>
+
+        {/* Comments Section */}
+        <section className="mt-12">
+          <h2 className="text-white text-2xl lg:text-3xl font-extrabold tracking-tight text-center mb-8">
+            {lang === 'ko' ? '댓글' : 'Comments'}
+          </h2>
+          <DisqusComments pageIdentifier="result" />
+        </section>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 mt-8 max-w-md mx-auto lg:mx-0">

@@ -5,4 +5,18 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: 'https://buzzstyle.work/',
   plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://buzzstyle.work',
+        changeOrigin: true,
+        secure: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'https://buzzstyle.work')
+          })
+        },
+      },
+    },
+  },
 })

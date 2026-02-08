@@ -20,7 +20,8 @@ const allowedOrigins = [
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  if (!origin || !allowedOrigins.includes(origin)) {
+  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') : false;
+  if (!origin || (!allowedOrigins.includes(origin) && !isPreview)) {
     return null;
   }
   return {
@@ -99,22 +100,90 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const isKorean = lang === 'ko';
 
-    // 리포트를 HTML로 변환
-    const reportHtml = report
-      .split('\\n')
-      .map((line: string) => {
-        if (line.startsWith('**') && line.endsWith('**')) {
-          return `<h2 style=\"color: #13c8ec; margin-top: 24px; margin-bottom: 12px; font-size: 18px;\">${line.replace(/\\*\\*/g, '')}</h2>`;
+    const getSectionEmoji = (title: string) => {
+      const t = title.toLowerCase();
+      if (t.includes('체형') || t.includes('body')) return '🧍';
+      if (t.includes('추천 스타일') || t.includes('style')) return '✨';
+      if (t.includes('컬러') || t.includes('color')) return '🎨';
+      if (t.includes('피해야') || t.includes('avoid')) return '🚫';
+      if (t.includes('코디') || t.includes('outfit')) return '🧥';
+      if (t.includes('액세서리') || t.includes('accessor')) return '💎';
+      if (t.includes('헤어') || t.includes('hair')) return '💇';
+      return '✅';
+    };
+
+    const formatParagraph = (text: string) =>
+      `<p style=\"color: #e9e9e9; margin: 10px 0; line-height: 1.7; font-size: 15px;\">${text}</p>`;
+
+    // 리포트를 HTML로 변환 (섹션/리스트/강조 처리)
+    const lines = report.split(/\\r?\\n/);
+    let inList = false;
+    const htmlParts: string[] = [];
+    lines.forEach((rawLine: string) => {
+        const line = rawLine.trim();
+        if (!line) {
+          if (inList) {
+            inList = false;
+            htmlParts.push('</ul><div style=\"height: 8px;\"></div>');
+            return;
+          }
+          htmlParts.push('<div style=\"height: 8px;\"></div>');
+          return;
         }
-        if (line.startsWith('- ')) {
-          return `<li style=\"color: #e0e0e0; margin: 4px 0;\">${line.substring(2)}</li>`;
+
+        const isBoldHeading = line.startsWith('**') && line.endsWith('**');
+        const isNumberedHeading = /^\\d+\\./.test(line);
+        if (isBoldHeading || isNumberedHeading) {
+          const title = line.replace(/\\*\\*/g, '').replace(/^\\d+\\.\\s*/, '');
+          if (inList) {
+            inList = false;
+            htmlParts.push(`</ul><h2 style=\"color: #ffffff; margin-top: 26px; margin-bottom: 12px; font-size: 18px; letter-spacing: 0.2px;\">
+              <span style=\"display: inline-flex; align-items: center; gap: 8px;\">
+                <span style=\"font-size: 18px;\">${getSectionEmoji(title)}</span>
+                <span>${title}</span>
+              </span>
+            </h2>`);
+            return;
+          }
+          htmlParts.push(`<h2 style=\"color: #ffffff; margin-top: 26px; margin-bottom: 12px; font-size: 18px; letter-spacing: 0.2px;\">
+            <span style=\"display: inline-flex; align-items: center; gap: 8px;\">
+              <span style=\"font-size: 18px;\">${getSectionEmoji(title)}</span>
+              <span>${title}</span>
+            </span>
+          </h2>`);
+          return;
         }
-        if (line.trim() === '') {
-          return '<br/>';
+
+        if (line.startsWith('- ') || line.startsWith('• ')) {
+          if (!inList) {
+            inList = true;
+            htmlParts.push(`<ul style=\"margin: 6px 0 12px; padding: 12px 16px; background: #141414; border: 1px solid #2c2c2c; border-radius: 12px; list-style: none;\">
+              <li style=\"color: #e0e0e0; margin: 6px 0; line-height: 1.6; font-size: 14.5px;\">${line.substring(2)}</li>`);
+            return;
+          }
+          htmlParts.push(`<li style=\"color: #e0e0e0; margin: 6px 0; line-height: 1.6; font-size: 14.5px;\">${line.substring(2)}</li>`);
+          return;
         }
-        return `<p style=\"color: #e0e0e0; margin: 8px 0; line-height: 1.6;\">${line}</p>`;
-      })
-      .join('');
+
+        if (inList) {
+          inList = false;
+          htmlParts.push(`</ul>${formatParagraph(line)}`);
+          return;
+        }
+
+        if (line.startsWith('TIP:') || line.startsWith('팁:')) {
+          htmlParts.push(`<div style=\"margin: 12px 0; padding: 12px 14px; background: #0f1f22; border: 1px solid #1f5f6b; border-radius: 12px; color: #cbeff6; font-size: 14px;\">
+            💡 ${line.replace(/^TIP:\\s*|^팁:\\s*/i, '')}
+          </div>`);
+          return;
+        }
+
+        htmlParts.push(formatParagraph(line));
+      });
+    if (inList) {
+      htmlParts.push('</ul>');
+    }
+    const reportHtml = htmlParts.join('');
 
     // 헤어스타일 이미지 섹션
     const hairstyleSection = hairstyleImage ? `

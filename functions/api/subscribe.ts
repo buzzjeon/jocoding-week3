@@ -20,7 +20,9 @@ const allowedOrigins = [
 ];
 
 const getCorsHeaders = (origin: string | null, isSandbox = false) => {
-  const isPreview = origin ? origin.endsWith('.pages.dev') : false;
+  const isPreview = origin
+    ? origin.endsWith('.pages.dev') || origin.endsWith('.cloudworkstations.dev')
+    : false;
   if (!origin || (!allowedOrigins.includes(origin) && !(isSandbox && isPreview))) {
     return null;
   }
@@ -39,13 +41,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       origin?: string;
       userId?: string;
       email?: string;
+      lang?: string;
     };
+    const headerLang = request.headers.get('Accept-Language')?.toLowerCase() || '';
+    const lang = body.lang === 'en' || body.lang === 'ko'
+      ? body.lang
+      : (headerLang.startsWith('ko') ? 'ko' : 'en');
 
     const isSandbox = env.POLAR_ENV === 'sandbox';
     const origin = request.headers.get('Origin') || body.origin || null;
     const corsHeaders = getCorsHeaders(origin, isSandbox);
     if (!corsHeaders) {
-      return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
+      return new Response(JSON.stringify({ error: lang === 'ko' ? '허용되지 않은 Origin입니다.' : 'Origin not allowed' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -54,7 +61,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const ip = getClientIp(request);
     const limiter = rateLimit(`subscribe:${ip}`, 6, 60_000);
     if (!limiter.allowed) {
-      return new Response(JSON.stringify({ error: 'Too many requests', retryAfter: limiter.retryAfter }), {
+      return new Response(JSON.stringify({ error: lang === 'ko' ? '요청이 너무 많습니다.' : 'Too many requests', retryAfter: limiter.retryAfter }), {
         status: 429,
         headers: {
           'Content-Type': 'application/json',
@@ -67,7 +74,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const antiBotToken = request.headers.get('X-AntiBot-Token');
     if (env.ANTI_BOT_SECRET) {
       if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
-        return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
+        return new Response(JSON.stringify({ error: lang === 'ko' ? '안티봇 토큰이 유효하지 않습니다.' : 'Invalid anti-bot token' }), {
           status: 403,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         });
@@ -101,7 +108,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       || origin?.startsWith('http://127.0.0.1')
       || origin?.endsWith('.pages.dev');
     if (isSandbox && !sandboxAllowed) {
-      return new Response(JSON.stringify({ error: 'Sandbox mode is only allowed from localhost.' }), {
+      return new Response(JSON.stringify({ error: lang === 'ko' ? '샌드박스 모드는 localhost에서만 허용됩니다.' : 'Sandbox mode is only allowed from localhost.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });

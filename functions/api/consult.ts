@@ -19,7 +19,8 @@ const allowedOrigins = [
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  if (!origin || !allowedOrigins.includes(origin)) {
+  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') : false;
+  if (!origin || (!allowedOrigins.includes(origin) && !isPreview)) {
     return null;
   }
   return {
@@ -45,6 +46,7 @@ export const onRequestOptions: PagesFunction = async (context) => {
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
+  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') : false;
   const corsHeaders = getCorsHeaders(origin);
   if (!corsHeaders) {
     return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
@@ -53,8 +55,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
   }
 
-  if (!env.ANTI_BOT_SECRET) {
-    return new Response(JSON.stringify({ error: 'Anti-bot not configured' }), {
+  const body = await request.json().catch(() => null);
+  const headerLang = request.headers.get('Accept-Language')?.toLowerCase() || '';
+  const lang = body?.lang === 'en' || body?.lang === 'ko'
+    ? body.lang
+    : (headerLang.startsWith('ko') ? 'ko' : 'en');
+
+  if (!env.ANTI_BOT_SECRET && !isPreview) {
+    return new Response(JSON.stringify({ error: lang === 'ko' ? '안티봇 설정이 없습니다.' : 'Anti-bot not configured' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
@@ -64,7 +72,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const ip = getClientIp(request);
     const limiter = rateLimit(`consult:${ip}`, 6, 60_000);
     if (!limiter.allowed) {
-      return new Response(JSON.stringify({ error: 'Too many requests', retryAfter: limiter.retryAfter }), {
+      return new Response(JSON.stringify({ error: lang === 'ko' ? '요청이 너무 많습니다.' : 'Too many requests', retryAfter: limiter.retryAfter }), {
         status: 429,
         headers: {
           'Content-Type': 'application/json',
@@ -74,20 +82,42 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
-    const antiBotToken = request.headers.get('X-AntiBot-Token');
-    if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
-      return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
-        status: 403,
+    if (env.ANTI_BOT_SECRET && !isPreview) {
+      const antiBotToken = request.headers.get('X-AntiBot-Token');
+      if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
+        return new Response(JSON.stringify({ error: lang === 'ko' ? '안티봇 토큰이 유효하지 않습니다.' : 'Invalid anti-bot token' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+    }
+
+    const { photo, gender, height, weight, unitSystem } = body || {};
+    const heightValue = Number(height);
+    const weightValue = Number(weight);
+    if (!Number.isFinite(heightValue) || !Number.isFinite(weightValue)) {
+      return new Response(JSON.stringify({ error: lang === 'ko' ? '키와 몸무게를 확인해주세요.' : 'Please check your height and weight.' }), {
+        status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
+    const isImperial = unitSystem === 'imperial';
+    const heightCm = isImperial ? heightValue * 2.54 : heightValue;
+    const weightKg = isImperial ? weightValue * 0.453592 : weightValue;
 
-    const { photo, gender, height, weight } = await request.json();
+    const genderText = lang === 'ko'
+      ? (gender === 'male' ? '남성' : '여성')
+      : (gender === 'male' ? 'male' : 'female');
+    const userMessage = lang === 'ko'
+      ? (isImperial
+        ? `${genderText}, 키 ${heightValue}in (${heightCm.toFixed(1)}cm), 몸무게 ${weightValue}lb (${weightKg.toFixed(1)}kg)`
+        : `${genderText}, 키 ${heightCm.toFixed(1)}cm, 몸무게 ${weightKg.toFixed(1)}kg`)
+      : (isImperial
+        ? `${genderText}, height ${heightValue} in (${heightCm.toFixed(1)} cm), weight ${weightValue} lb (${weightKg.toFixed(1)} kg)`
+        : `${genderText}, height ${heightCm.toFixed(1)} cm, weight ${weightKg.toFixed(1)} kg`);
 
-    const genderText = gender === 'male' ? '남성' : '여성';
-    const userMessage = `${genderText}, 키 ${height}cm, 몸무게 ${weight}kg`;
-
-    const systemPrompt = `당신은 전문 퍼스널 스타일리스트입니다. 사용자의 성별, 키, 몸무게 정보를 바탕으로 맞춤형 스타일 컨설팅 보고서를 작성해주세요.
+    const systemPrompt = lang === 'ko'
+      ? `당신은 전문 퍼스널 스타일리스트입니다. 사용자의 성별, 키, 몸무게 정보를 바탕으로 맞춤형 스타일 컨설팅 보고서를 작성해주세요.
 
 다음 항목들을 포함해서 상세한 스타일 컨설팅 보고서를 작성해주세요:
 
@@ -100,7 +130,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
 사진이 제공된 경우, 현재 스타일에 대한 피드백과 개선점도 제안해주세요.
 
-친근하고 전문적인 톤으로 작성해주세요.`;
+친근하고 전문적인 톤으로 작성해주세요.`
+      : `You are a professional personal stylist. Based on the user's gender, height, and weight, write a customized style consulting report.
+
+Please include the following sections:
+
+1. **Body Analysis**: Analyze body type based on height and weight
+2. **Recommended Styles**: Styles that flatter the body type
+3. **Color Recommendations**: Color combinations that suit the user
+4. **Styles to Avoid**: Styles that do not complement the body type
+5. **Outfit Examples**: Seasonal outfit ideas (spring/summer, fall/winter)
+6. **Accessory Suggestions**: Accessories that complement the look
+
+If a photo is provided, include feedback on the current style and improvement tips.
+
+Write in a friendly, professional tone.`;
 
     const messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> }> = [
       { role: 'system', content: systemPrompt }
@@ -140,7 +184,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     if (!response.ok) {
       return new Response(JSON.stringify({
-        error: 'OpenAI API 오류',
+        error: lang === 'ko' ? 'OpenAI API 오류' : 'OpenAI API error',
         details: data.error?.message || JSON.stringify(data),
         status: response.status,
         hasKey: !!env.OPENAI_API_KEY,

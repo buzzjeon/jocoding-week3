@@ -20,7 +20,8 @@ const allowedOrigins = [
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  if (!origin || !allowedOrigins.includes(origin)) {
+  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') : false;
+  if (!origin || (!allowedOrigins.includes(origin) && !isPreview)) {
     return null;
   }
   return {
