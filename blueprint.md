@@ -1,48 +1,40 @@
-# StyleAI Blueprint
+# GlobalSell AI - Blueprint
 
-## 1. 개요
+## 1. Project Overview
+**GlobalSell AI**는 사진 한 장으로 글로벌 이커머스(Amazon, eBay, Shopify) 입점을 돕는 AI 기반 B2B SaaS 솔루션입니다. 국내외 셀러들이 겪는 언어 장벽과 SEO 최적화 문제를 해결하여 실질적인 매출 증대를 목표로 합니다.
 
-StyleAI는 사용자의 신체 정보와 사진을 기반으로 개인화된 패션 스타일과 퍼스널 컬러를 추천해주는 AI 기반 웹 애플리케이션입니다.
+## 2. Core Value Proposition
+- **Efficiency:** 사진 업로드 한 번으로 제목, 불렛포인트, 상세설명 자동 완성.
+- **Global Reach:** 영어 및 다국어 리스팅 자동 생성으로 해외 시장 진출 가속화.
+- **SEO Optimization:** 각 플랫폼별 알고리즘에 최적화된 키워드 추출.
 
-### 주요 기능
-- **AI 스타일 컨설팅:** 사용자의 키, 몸무게, 체형 사진을 기반으로 상세한 스타일링 리포트를 제공합니다.
-- **AI 퍼스널 컬러 진단:** 사용자의 얼굴 사진을 분석하여 가장 잘 어울리는 퍼스널 컬러(봄 웜, 여름 쿨, 가을 웜, 겨울 쿨)를 진단하고 관련 색상 팔레트를 추천합니다.
+## 3. Key Features & Implementation Plan
 
-## 2. 기존 기능: AI 스타일 컨설팅
+### Phase 1: Identity & UI Pivot
+- [ ] **Branding:** "StyleAI"에서 "GlobalSell AI"로 전면 교체.
+- [ ] **Form Redesign:** 
+    - `gender` -> `Product Category` (Fashion, Electronics, Home, etc.)
+    - `height` -> `Target Market` (Amazon US, eBay, Shopify, etc.)
+    - `weight` -> `Target Price` (USD)
+- [ ] **Landing Page:** 스타일 상담 컨셉에서 글로벌 셀링 파트너 컨셉으로 카피 및 이미지 변경.
 
-- **입력:** 성별, 키, 몸무게, 전신 사진
-- **프로세스:**
-    1. 사용자가 정보를 입력하고 사진을 업로드합니다.
-    2. AI가 정보를 분석하여 체형, 추천 스타일, 비추천 스타일, 계절별 코디, 액세서리 등을 포함한 리포트를 생성합니다.
-    3. AI가 사용자의 사진을 기반으로 어울리는 헤어스타일 이미지를 생성합니다.
-- **출력:** 상세 스타일링 리포트 및 추천 헤어스타일 이미지
+### Phase 2: AI Logic Redefinition
+- [ ] **`functions/api/consult.ts`**:
+    - GPT-4o Vision 프롬프트 수정: 상품 인식 -> SEO 최적화 리스팅 생성 (제목 200자, 불렛포인트 5개, 태그 20개).
+- [ ] **`functions/api/daily-recommendation.ts`**:
+    - "오늘의 코디" -> "Global Market Trend Insight" (급상승 키워드, 소싱 아이템 추천).
 
-## 3. 신규 기능 개발 계획: 퍼스널 컬러 진단
+### Phase 3: Business Logic & Integration
+- [ ] **Pricing (Polar):** "Pro Seller Plan" ($19/mo)으로 명칭 및 가치 제안 변경.
+- [ ] **Email (Resend):** 리스팅 데이터를 엑셀/텍스트 형식으로 깔끔하게 정리하여 이메일 발송.
+- [ ] **Database (Supabase):** `profile` 테이블에 셀러 정보(카테고리, 주력 시장) 저장.
 
-### 3.1. 기능 목표
-사용자가 자신의 얼굴 사진을 업로드하면, AI가 이를 분석하여 퍼스널 컬러를 진단하고, 진단 결과를 바탕으로 어울리는 색상, 메이크업, 헤어 컬러를 추천하는 기능을 추가합니다.
+## 4. Technical Strategy
+- **Frontend:** React (TypeScript) + Tailwind CSS.
+- **Backend:** Cloudflare Pages Functions.
+- **AI:** OpenAI GPT-4o (Vision) + GPT-4o.
+- **Infrastructure:** Supabase (Auth/DB), Polar (Payments), Resend (Email).
 
-### 3.2. 개발 단계
-
-- **1단계: API 엔드포인트 생성 (`functions/api/analyze-color.ts`)**
-    - 얼굴 사진을 입력받아 AI(OpenAI Vision)를 호출하는 새로운 서버리스 함수를 생성합니다.
-    - AI에게 퍼스널 컬러 전문가 역할을 부여하고, 다음 항목을 포함한 상세 리포트를 생성하도록 요청하는 프롬프트를 작성합니다.
-        - 퍼스널 컬러 타입 (예: 봄 웜톤)
-        - 상세 분석 이유 (피부, 눈동자, 머리카락 색 기반)
-        - 추천 색상 팔레트 (Best, Second Best)
-        - 추천 메이크업 컬러
-        - 추천 헤어 컬러
-    - 분석 결과를 JSON 형태로 클라이언트에게 반환합니다.
-
-- **2단계: 프론트엔드 UI/UX 개발 (`src/App.tsx`)**
-    - 메인 페이지에 '퍼스널 컬러 진단'으로 진입할 수 있는 새로운 섹션 또는 버튼을 추가합니다.
-    - 얼굴 사진을 업로드할 수 있는 파일 업로드 컴포넌트를 구현합니다.
-    - 분석 요청을 보내고 로딩 상태를 표시하는 UI를 구현합니다.
-    - API로부터 받은 퍼스널 컬러 진단 결과를 사용자에게 시각적으로 명확하게 보여주는 결과 페이지를 디자인합니다.
-
-- **3단계: 다국어 지원**
-    - 새로운 UI에 사용될 텍스트(버튼, 제목, 설명 등)를 다국어(한국어/영어)로 처리합니다.
-
-- **4단계: 테스트 및 배포**
-    - 기능이 올바르게 작동하는지 다양한 이미지와 조건에서 테스트합니다.
-    - 코드 수정 사항을 Git에 푸시하여 실제 서비스에 배포합니다.
+## 5. Current Status
+- **Current Branch:** globalsellai
+- **Pivot Start:** 2026-02-19
