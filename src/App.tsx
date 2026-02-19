@@ -393,6 +393,10 @@ For refund-related questions, please contact refunds@buzzstyle.work.
       email: 'Email',
       createdAt: 'Member Since',
       provider: 'Login Method',
+      dailyRecTitle: 'Daily Recommendation',
+      dailyRecEmpty: 'No recommendations yet. Check back tomorrow.',
+      dailyRecRefresh: 'Refresh',
+      dailyRecLoading: 'Loading...',
       changePassword: 'Change Password',
       currentPassword: 'Current Password',
       newPassword: 'New Password',
@@ -781,6 +785,10 @@ StyleAI는 구매 즉시 제공되는 디지털 서비스입니다. AI가 생성
       email: '이메일',
       createdAt: '가입일',
       provider: '로그인 방식',
+      dailyRecTitle: '오늘의 추천',
+      dailyRecEmpty: '아직 추천이 없습니다. 내일 다시 확인해 주세요.',
+      dailyRecRefresh: '새로고침',
+      dailyRecLoading: '불러오는 중...',
       changePassword: '비밀번호 변경',
       currentPassword: '현재 비밀번호',
       newPassword: '새 비밀번호',
@@ -1419,6 +1427,9 @@ function App() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [mypageError, setMypageError] = useState('')
   const [mypageSuccess, setMypageSuccess] = useState('')
+  const [dailyRec, setDailyRec] = useState<{ recommendation_date: string; recommendation: string } | null>(null)
+  const [dailyRecList, setDailyRecList] = useState<Array<{ recommendation_date: string; recommendation: string }>>([])
+  const [dailyRecLoading, setDailyRecLoading] = useState(false)
   const antiBotTokenRef = useRef<{ token: string; expiresAt: number } | null>(null)
 
   const t = translations[lang]
@@ -1719,6 +1730,43 @@ function App() {
     setLoading(false)
   }
 
+  const fetchDailyRecommendation = async () => {
+    if (!user) return
+    setDailyRecLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setDailyRec(null)
+        return
+      }
+      const response = await fetch('/api/daily-recommendation?limit=7', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+      const data = await response.json()
+      if (response.ok && data?.recommendation) {
+        setDailyRec({
+          recommendation_date: data.recommendation.recommendation_date,
+          recommendation: data.recommendation.recommendation,
+        })
+        setDailyRecList(Array.isArray(data.list) ? data.list : [])
+      } else {
+        setDailyRec(null)
+        setDailyRecList([])
+      }
+    } catch {
+      setDailyRec(null)
+      setDailyRecList([])
+    } finally {
+      setDailyRecLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (page !== 'mypage' || !user) return
+    void fetchDailyRecommendation()
+  }, [page, user?.id])
+
   const handleDeleteAccount = async () => {
     const confirmText = lang === 'ko' ? '삭제' : 'DELETE'
     if (deleteConfirmText !== confirmText) {
@@ -1995,6 +2043,25 @@ function App() {
         lang,
       }
       sessionStorage.setItem(pendingConsultKey, JSON.stringify(payload))
+
+      if (user?.id) {
+        const locale = navigator.language
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+        void fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            email: user.email,
+            locale,
+            timezone,
+            unitSystem,
+            gender,
+            heightCm,
+            weightKg,
+          }),
+        })
+      }
 
       const isPreviewHost = window.location.host.endsWith('.cloudworkstations.dev')
       if (isPreviewHost) {
@@ -2555,6 +2622,20 @@ Thank you for using StyleAI!`
             </div>
           </section>
 
+          {/* Start Styling CTA */}
+          <section className="px-6 pb-4 lg:pb-8">
+            <div className="max-w-5xl mx-auto">
+              <div className="glass-panel rounded-3xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <button
+                  onClick={() => navigateTo('form')}
+                  className="w-full sm:flex-1 flex items-center justify-center rounded-2xl h-14 px-10 bg-gradient-to-r from-primary via-[#bdf59f] to-secondary text-background-dark text-lg font-bold tracking-tight hover:brightness-110 active:scale-95 transition-all shadow-[0_20px_60px_rgba(139,207,107,0.35)]"
+                >
+                  {t.hero.cta}
+                </button>
+              </div>
+            </div>
+          </section>
+
           {/* Process Section */}
           <section className="py-16 lg:py-24 px-6">
             <div className="max-w-5xl mx-auto">
@@ -2597,15 +2678,6 @@ Thank you for using StyleAI!`
                     <p className="text-white/60 lg:text-lg">{t.cta.description}</p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-                    <div className="flex flex-col gap-2 items-center">
-                      <button
-                        onClick={() => navigateTo('form')}
-                        className="w-full sm:w-auto flex items-center justify-center rounded-2xl h-14 px-12 bg-white/10 border border-white/20 text-white text-lg font-bold tracking-tight hover:bg-white/20 transition-all"
-                      >
-                        {t.hero.cta}
-                      </button>
-                      <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">{t.cta.note}</p>
-                    </div>
                     <div className="flex flex-col gap-2 items-center">
                       <button
                         onClick={() => navigateTo('subscription')}
@@ -3704,6 +3776,51 @@ Thank you for using StyleAI!`
                 <span className="text-white">{formatDate(user?.created_at)}</span>
               </div>
             </div>
+          </div>
+
+          {/* Daily Recommendation */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-white text-lg font-bold flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">calendar_today</span>
+                {t.mypage.dailyRecTitle}
+              </h2>
+              <button
+                onClick={fetchDailyRecommendation}
+                className="text-xs text-white/60 hover:text-white transition-colors"
+                disabled={dailyRecLoading}
+              >
+                {t.mypage.dailyRecRefresh}
+              </button>
+            </div>
+            {dailyRecLoading ? (
+              <div className="text-white/50 text-sm">{t.mypage.dailyRecLoading}</div>
+            ) : dailyRec ? (
+              <div className="space-y-4">
+                <div className="text-white/80 text-sm whitespace-pre-wrap leading-relaxed">
+                  {dailyRec.recommendation}
+                </div>
+                {dailyRecList.length > 1 && (
+                  <div className="border-t border-white/10 pt-3">
+                    <div className="text-white/50 text-xs mb-2">Recent</div>
+                    <div className="space-y-2">
+                      {dailyRecList.slice(1).map((item) => (
+                        <details key={item.recommendation_date} className="rounded-lg bg-white/5 border border-white/10 px-3 py-2">
+                          <summary className="cursor-pointer text-white/70 text-sm">
+                            {item.recommendation_date}
+                          </summary>
+                          <div className="text-white/70 text-sm whitespace-pre-wrap leading-relaxed mt-2">
+                            {item.recommendation}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-white/50 text-sm">{t.mypage.dailyRecEmpty}</div>
+            )}
           </div>
 
           {/* Change Password - Only for email users */}

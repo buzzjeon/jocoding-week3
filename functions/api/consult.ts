@@ -3,6 +3,8 @@ import { getClientIp, rateLimit, verifyAntiBotToken } from './_antibot';
 interface Env {
   OPENAI_API_KEY: string;
   ANTI_BOT_SECRET: string;
+  POLAR_ACCESS_TOKEN: string;
+  POLAR_ENV?: 'sandbox' | 'production';
 }
 
 const allowedOrigins = [
@@ -61,8 +63,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     ? body.lang
     : (headerLang.startsWith('ko') ? 'ko' : 'en');
 
-  if (!env.ANTI_BOT_SECRET && !isPreview) {
-    return new Response(JSON.stringify({ error: lang === 'ko' ? '안티봇 설정이 없습니다.' : 'Anti-bot not configured' }), {
+  if (!env.ANTI_BOT_SECRET) {
+    return new Response(JSON.stringify({ error: lang === 'ko' ? '보안 설정 오류' : 'Security configuration error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
@@ -82,17 +84,51 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
-    if (env.ANTI_BOT_SECRET && !isPreview) {
-      const antiBotToken = request.headers.get('X-AntiBot-Token');
-      if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
-        return new Response(JSON.stringify({ error: lang === 'ko' ? '안티봇 토큰이 유효하지 않습니다.' : 'Invalid anti-bot token' }), {
-          status: 403,
+    const antiBotToken = request.headers.get('X-AntiBot-Token');
+    if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
+      return new Response(JSON.stringify({ error: lang === 'ko' ? '안티봇 토큰이 유효하지 않습니다.' : 'Invalid anti-bot token' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const { photo, gender, height, weight, unitSystem, checkoutId } = body || {};
+
+    // 사진 크기 검증 (Base64 기준 약 7MB 제한, 바이너리 약 5MB)
+    if (photo && photo.length > 7 * 1024 * 1024) {
+      return new Response(JSON.stringify({ error: lang === 'ko' ? '사진 크기가 너무 큽니다 (최대 5MB).' : 'Photo size too large (max 5MB).' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    // 결제 완료 서버사이드 검증
+    if (!isPreview) {
+      if (!checkoutId) {
+        return new Response(JSON.stringify({ error: lang === 'ko' ? '결제 정보가 없습니다.' : 'Missing payment information.' }), {
+          status: 402,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+      const isSandbox = env.POLAR_ENV === 'sandbox';
+      const polarApiBase = isSandbox ? 'https://sandbox-api.polar.sh' : 'https://api.polar.sh';
+      const checkoutRes = await fetch(`${polarApiBase}/v1/checkouts/${encodeURIComponent(checkoutId)}`, {
+        headers: { 'Authorization': `Bearer ${env.POLAR_ACCESS_TOKEN}` },
+      });
+      if (!checkoutRes.ok) {
+        return new Response(JSON.stringify({ error: lang === 'ko' ? '결제 정보를 확인할 수 없습니다.' : 'Unable to verify payment.' }), {
+          status: 402,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+      const checkoutData = await checkoutRes.json() as { status?: string };
+      if (checkoutData.status !== 'succeeded' && checkoutData.status !== 'confirmed') {
+        return new Response(JSON.stringify({ error: lang === 'ko' ? '결제가 완료되지 않았습니다.' : 'Payment not completed.' }), {
+          status: 402,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         });
       }
     }
-
-    const { photo, gender, height, weight, unitSystem } = body || {};
     const heightValue = Number(height);
     const weightValue = Number(weight);
     if (!Number.isFinite(heightValue) || !Number.isFinite(weightValue)) {
@@ -183,14 +219,11 @@ Write in a friendly, professional tone.`;
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('OpenAI API error:', response.status, JSON.stringify(data));
       return new Response(JSON.stringify({
-        error: lang === 'ko' ? 'OpenAI API 오류' : 'OpenAI API error',
-        details: data.error?.message || JSON.stringify(data),
-        status: response.status,
-        hasKey: !!env.OPENAI_API_KEY,
-        keyPrefix: env.OPENAI_API_KEY ? env.OPENAI_API_KEY.substring(0, 10) + '...' : 'none'
+        error: lang === 'ko' ? 'AI 서비스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.' : 'AI service is temporarily unavailable. Please try again later.',
       }), {
-        status: 500,
+        status: 502,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
@@ -240,9 +273,9 @@ Write in a friendly, professional tone.`;
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   } catch (error) {
+    console.error('Consult error:', error);
     return new Response(JSON.stringify({
       error: '서버 오류가 발생했습니다.',
-      details: error instanceof Error ? error.message : String(error)
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },

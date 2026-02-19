@@ -1,0 +1,6 @@
+name = "webhook"
+compatibility_date = "2024-10-01"
+main = "cron-worker.js"
+
+[triggers]
+crons = ["0 8 * * *"]

@@ -49,7 +49,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       : (headerLang.startsWith('ko') ? 'ko' : 'en');
 
     const isSandbox = env.POLAR_ENV === 'sandbox';
-    const origin = request.headers.get('Origin') || body.origin || null;
+    const origin = request.headers.get('Origin') || null;
     const corsHeaders = getCorsHeaders(origin, isSandbox);
     if (!corsHeaders) {
       return new Response(JSON.stringify({ error: lang === 'ko' ? '허용되지 않은 Origin입니다.' : 'Origin not allowed' }), {
@@ -71,14 +71,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
+    if (!env.ANTI_BOT_SECRET) {
+      return new Response(JSON.stringify({ error: lang === 'ko' ? '보안 설정 오류' : 'Security configuration error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
     const antiBotToken = request.headers.get('X-AntiBot-Token');
-    if (env.ANTI_BOT_SECRET) {
-      if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
-        return new Response(JSON.stringify({ error: lang === 'ko' ? '안티봇 토큰이 유효하지 않습니다.' : 'Invalid anti-bot token' }), {
-          status: 403,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        });
-      }
+    if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
+      return new Response(JSON.stringify({ error: lang === 'ko' ? '안티봇 토큰이 유효하지 않습니다.' : 'Invalid anti-bot token' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
     }
 
     // Use the validated Origin header to prevent open-redirects.
@@ -97,6 +101,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Link to user if provided
     if (body.userId) {
       checkoutData.external_customer_id = body.userId;
+      checkoutData.metadata = { user_id: body.userId };
     }
 
     // Pre-fill email if provided
@@ -148,7 +153,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   } catch (error) {
     return new Response(JSON.stringify({
       error: 'Server error',
-      details: error instanceof Error ? error.message : String(error)
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

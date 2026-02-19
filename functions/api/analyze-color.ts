@@ -24,6 +24,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return new Response(JSON.stringify({ error: 'Image not provided' }), { status: 400 });
     }
 
+    // 파일 크기 제한 (5MB)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    if (imageFile.size > MAX_FILE_SIZE) {
+      return new Response(JSON.stringify({ error: 'Image file too large (max 5MB)' }), { status: 400 });
+    }
+
+    // 파일 형식 제한
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!ALLOWED_TYPES.includes(imageFile.type)) {
+      return new Response(JSON.stringify({ error: 'Invalid file type. Only JPEG, PNG, and WebP are allowed.' }), { status: 400 });
+    }
+
     const imageBase64 = await convertImageToBase64(imageFile);
 
     // 2. OpenAI API 호출

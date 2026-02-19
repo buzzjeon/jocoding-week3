@@ -70,14 +70,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
+    if (!env.ANTI_BOT_SECRET) {
+      return new Response(JSON.stringify({ error: 'Security configuration error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
     const antiBotToken = request.headers.get('X-AntiBot-Token');
-    if (env.ANTI_BOT_SECRET) {
-      if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
-        return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
-          status: 403,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        });
-      }
+    if (!antiBotToken || !(await verifyAntiBotToken(env.ANTI_BOT_SECRET, ip, antiBotToken))) {
+      return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
     }
 
     const { email, report, hairstyleImage, lang } = await request.json();
@@ -100,6 +104,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const isKorean = lang === 'ko';
 
+    const escapeHtml = (str: string): string =>
+      str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
     const getSectionEmoji = (title: string) => {
       const t = title.toLowerCase();
       if (t.includes('체형') || t.includes('body')) return '🧍';
@@ -113,7 +121,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     };
 
     const formatParagraph = (text: string) =>
-      `<p style=\"color: #e9e9e9; margin: 10px 0; line-height: 1.7; font-size: 15px;\">${text}</p>`;
+      `<p style=\"color: #e9e9e9; margin: 10px 0; line-height: 1.7; font-size: 15px;\">${escapeHtml(text)}</p>`;
 
     // 리포트를 HTML로 변환 (섹션/리스트/강조 처리)
     const lines = report.split(/\\r?\\n/);
@@ -134,7 +142,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         const isBoldHeading = line.startsWith('**') && line.endsWith('**');
         const isNumberedHeading = /^\\d+\\./.test(line);
         if (isBoldHeading || isNumberedHeading) {
-          const title = line.replace(/\\*\\*/g, '').replace(/^\\d+\\.\\s*/, '');
+          const title = escapeHtml(line.replace(/\\*\\*/g, '').replace(/^\\d+\\.\\s*/, ''));
           if (inList) {
             inList = false;
             htmlParts.push(`</ul><h2 style=\"color: #ffffff; margin-top: 26px; margin-bottom: 12px; font-size: 18px; letter-spacing: 0.2px;\">
@@ -158,10 +166,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           if (!inList) {
             inList = true;
             htmlParts.push(`<ul style=\"margin: 6px 0 12px; padding: 12px 16px; background: #141414; border: 1px solid #2c2c2c; border-radius: 12px; list-style: none;\">
-              <li style=\"color: #e0e0e0; margin: 6px 0; line-height: 1.6; font-size: 14.5px;\">${line.substring(2)}</li>`);
+              <li style=\"color: #e0e0e0; margin: 6px 0; line-height: 1.6; font-size: 14.5px;\">${escapeHtml(line.substring(2))}</li>`);
             return;
           }
-          htmlParts.push(`<li style=\"color: #e0e0e0; margin: 6px 0; line-height: 1.6; font-size: 14.5px;\">${line.substring(2)}</li>`);
+          htmlParts.push(`<li style=\"color: #e0e0e0; margin: 6px 0; line-height: 1.6; font-size: 14.5px;\">${escapeHtml(line.substring(2))}</li>`);
           return;
         }
 
@@ -173,7 +181,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
         if (line.startsWith('TIP:') || line.startsWith('팁:')) {
           htmlParts.push(`<div style=\"margin: 12px 0; padding: 12px 14px; background: #0f1f22; border: 1px solid #1f5f6b; border-radius: 12px; color: #cbeff6; font-size: 14px;\">
-            💡 ${line.replace(/^TIP:\\s*|^팁:\\s*/i, '')}
+            💡 ${escapeHtml(line.replace(/^TIP:\\s*|^팁:\\s*/i, ''))}
           </div>`);
           return;
         }
@@ -185,13 +193,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
     const reportHtml = htmlParts.join('');
 
-    // 헤어스타일 이미지 섹션
-    const hairstyleSection = hairstyleImage ? `
+    // 헤어스타일 이미지 섹션 - data: URI만 허용하여 외부 URL 주입 방지
+    const safeHairstyleImage = hairstyleImage && typeof hairstyleImage === 'string'
+      && hairstyleImage.startsWith('data:image/') ? hairstyleImage : null;
+    const hairstyleSection = safeHairstyleImage ? `
       <div style=\"margin-top: 32px; padding-top: 24px; border-top: 1px solid #333;\">
         <h2 style=\"color: #13c8ec; margin-bottom: 16px; font-size: 18px;\">
           ${isKorean ? '추천 헤어스타일' : 'Recommended Hairstyles'}
         </h2>
-        <img src=\"${hairstyleImage}\" alt=\"Recommended hairstyles\" style=\"width: 100%; max-width: 500px; border-radius: 12px;\" />
+        <img src=\"${safeHairstyleImage}\" alt=\"Recommended hairstyles\" style=\"width: 100%; max-width: 500px; border-radius: 12px;\" />
       </div>
     ` : '';
 
@@ -290,7 +300,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     console.error('Send email error:', error);
     return new Response(JSON.stringify({
       error: '서버 오류가 발생했습니다.',
-      details: error instanceof Error ? error.message : String(error),
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },

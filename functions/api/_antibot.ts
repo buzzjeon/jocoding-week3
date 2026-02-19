@@ -1,5 +1,9 @@
 const encoder = new TextEncoder();
 
+// TODO: In-memory rate limiting is per-isolate on Cloudflare Workers and is
+// ineffective under distributed load. Migrate to Cloudflare KV or Durable Objects
+// for production-grade rate limiting.
+// Example: https://developers.cloudflare.com/workers/runtime-apis/kv/
 type RateLimitBucket = { count: number; resetAt: number };
 const rateLimitBuckets = new Map<string, RateLimitBucket>();
 
@@ -68,5 +72,19 @@ export const verifyAntiBotToken = async (secret: string, ip: string, token: stri
   }
 
   const expected = await hmacSign(secret, `${expiresAt}.${ip}`);
-  return expected === signature;
+  // Constant-time comparison to prevent timing attacks
+  if (expected.length !== signature.length) return false;
+  const key = await crypto.subtle.importKey(
+    'raw', crypto.getRandomValues(new Uint8Array(32)),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const [sigA, sigB] = await Promise.all([
+    crypto.subtle.sign('HMAC', key, encoder.encode(expected)),
+    crypto.subtle.sign('HMAC', key, encoder.encode(signature)),
+  ]);
+  const a = new Uint8Array(sigA);
+  const b = new Uint8Array(sigB);
+  let result = 0;
+  for (let i = 0; i < a.length; i++) result |= a[i] ^ b[i];
+  return result === 0;
 };

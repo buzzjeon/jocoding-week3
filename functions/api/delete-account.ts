@@ -56,14 +56,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
+    if (!context.env.ANTI_BOT_SECRET) {
+      return new Response(JSON.stringify({ error: 'Security configuration error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
     const antiBotToken = context.request.headers.get('X-AntiBot-Token');
-    if (context.env.ANTI_BOT_SECRET) {
-      if (!antiBotToken || !(await verifyAntiBotToken(context.env.ANTI_BOT_SECRET, ip, antiBotToken))) {
-        return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
-          status: 403,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        });
-      }
+    if (!antiBotToken || !(await verifyAntiBotToken(context.env.ANTI_BOT_SECRET, ip, antiBotToken))) {
+      return new Response(JSON.stringify({ error: 'Invalid anti-bot token' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
     }
 
     // Get the authorization header
