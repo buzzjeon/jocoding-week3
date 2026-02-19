@@ -3,17 +3,17 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: 'https://buzzstyle.work/',
+  base: 'https://brandforge.buzzstyle.work/',
   plugins: [react()],
   server: {
     proxy: {
       '/api': {
-        target: 'https://buzzstyle.work',
+        target: 'https://brandforge.buzzstyle.work',
         changeOrigin: true,
         secure: true,
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Origin', 'https://buzzstyle.work')
+            proxyReq.setHeader('Origin', 'https://brandforge.buzzstyle.work')
           })
         },
       },

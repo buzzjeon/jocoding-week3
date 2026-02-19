@@ -6,92 +6,64 @@ interface Env {
   OPENAI_API_KEY: string;
   RESEND_API_KEY: string;
   RESEND_FROM: string;
-  OPENWEATHER_API_KEY: string;
 }
 
 const toDateString = (date: Date) => date.toISOString().slice(0, 10);
 
 const buildPrompt = (profile: {
-  gender?: string | null;
-  height_cm?: number | null;
-  weight_kg?: number | null;
-  style_preferences?: Record<string, unknown> | null;
-  unit_system?: string | null;
+  brand_name?: string | null;
+  industry?: string | null;
+  target_audience?: string | null;
+  brand_tone?: string | null;
+  platforms?: string[] | null;
   locale?: string | null;
-}, weather: Record<string, unknown> | null) => {
-  const genderText = profile.gender === 'male' ? 'male' : profile.gender === 'female' ? 'female' : 'unspecified';
-  const isImperial = profile.unit_system === 'imperial';
-  const heightValue = profile.height_cm ?? null;
-  const weightValue = profile.weight_kg ?? null;
-  const heightText = heightValue
-    ? (isImperial ? `${(heightValue / 2.54).toFixed(1)} in (${heightValue} cm)` : `${heightValue} cm`)
-    : 'unknown';
-  const weightText = weightValue
-    ? (isImperial ? `${(weightValue / 0.453592).toFixed(1)} lb (${weightValue} kg)` : `${weightValue} kg`)
-    : 'unknown';
-  const prefs = profile.style_preferences ? JSON.stringify(profile.style_preferences) : 'none';
-  const weatherText = weather ? JSON.stringify(weather) : 'unavailable';
+}, dateStr: string) => {
+  const brandName = profile.brand_name || 'Unknown Brand';
+  const industry = profile.industry || 'General';
+  const targetAudience = profile.target_audience || 'General audience';
+  const brandTone = profile.brand_tone || 'Professional';
+  const platforms = profile.platforms?.join(', ') || 'Instagram, Twitter/X, LinkedIn';
 
   const isKorean = (profile.locale || '').toLowerCase().startsWith('ko');
   if (isKorean) {
-    return `당신은 전문 퍼스널 스타일리스트입니다. 오늘의 간단한 코디 추천을 작성해주세요.
+    return `당신은 마케팅 콘텐츠 전략가입니다. 브랜드를 위한 오늘의 콘텐츠 브리핑을 작성해주세요.
 
-사용자:
-- 성별: ${genderText}
-- 키: ${heightText}
-- 몸무게: ${weightText}
-- 선호: ${prefs}
+브랜드: ${brandName}
+산업: ${industry}
+타겟 오디언스: ${targetAudience}
+톤: ${brandTone}
+플랫폼: ${platforms}
+날짜 컨텍스트: ${dateStr} (관련된 시즌/캘린더 컨텍스트를 포함해주세요)
 
-날씨:
-${weatherText}
+다음을 작성해주세요:
+1) Instagram 게시물 - 해시태그 포함 캡션 (매력적, 비주얼 중심)
+2) Twitter/X 게시물 - 간결하고 임팩트 있는 트윗과 관련 해시태그
+3) LinkedIn 게시물 - 전문적인 사고 리더십 콘텐츠
+4) 광고 카피 - 짧은 광고 헤드라인 + 본문 텍스트
+5) 캘린더 팁 - 이번 주 관련 날짜, 이벤트 또는 시즌 기회
+6) 트렌드 훅 - 브랜드를 현재 트렌드나 토픽에 연결
 
-다음을 포함하세요:
-1) 한 줄 요약
-2) 상의/하의/신발 추천
-3) 액세서리(선택)
-4) 컬러 팔레트
-220단어 이하로 간결하게 작성하세요.`;
+각 섹션을 간결하고 실행 가능하게 작성하세요. 총 500단어 이하.`;
   }
 
-  return `You are a professional personal stylist. Create a concise daily outfit recommendation.
+  return `You are a marketing content strategist. Create today's content briefing for the brand.
 
-User:
-- gender: ${genderText}
-- height: ${heightText}
-- weight: ${weightText}
-- preferences: ${prefs}
+Brand: ${brandName}
+Industry: ${industry}
+Target Audience: ${targetAudience}
+Tone: ${brandTone}
+Platforms: ${platforms}
+Date Context: ${dateStr} (include any relevant seasonal/calendar context)
 
-Weather:
-${weatherText}
+Please create:
+1) Instagram Post - Caption with hashtags (engaging, visual-focused)
+2) Twitter/X Post - Concise, punchy tweet with relevant hashtags
+3) LinkedIn Post - Professional thought leadership content
+4) Ad Copy - A short advertising headline + body text
+5) Calendar Tip - Any relevant dates, events, or seasonal opportunities this week
+6) Trending Hook - Connect the brand to a current trend or topic
 
-Please include:
-1) A short summary line
-2) Outfit suggestions (top, bottom, shoes)
-3) Optional accessories
-4) Color palette guidance
-Keep it under 220 words.`;
-};
-
-const fetchWeather = async (env: Env, locationKey: string, lat: number, lon: number, dateStr: string) => {
-  const cached = await supabaseRequest(env, `weather_cache?location_key=eq.${encodeURIComponent(locationKey)}&weather_date=eq.${dateStr}&select=*`);
-  if (cached && cached.length > 0) return cached[0].data;
-
-  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${env.OPENWEATHER_API_KEY}&units=metric`;
-  const res = await fetch(url);
-  const data = await res.json();
-
-  await supabaseRequest(env, `weather_cache`, {
-    method: 'POST',
-    headers: { 'Prefer': 'resolution=merge-duplicates' },
-    body: JSON.stringify({
-      location_key: locationKey,
-      weather_date: dateStr,
-      data,
-      fetched_at: new Date().toISOString(),
-    }),
-  });
-
-  return data;
+Keep each section concise and actionable. Total under 500 words.`;
 };
 
 const sendEmail = async (env: Env, email: string, subject: string, html: string) => {
@@ -130,20 +102,11 @@ export const runDailyRecommendations = async (env: Env) => {
     );
     if (existing && existing.length > 0) continue;
 
-    const profileRows = await supabaseRequest(env, `user_profiles?user_id=eq.${userId}&select=*`);
+    const profileRows = await supabaseRequest(env, `user_profiles?user_id=eq.${userId}&select=brand_name,industry,target_audience,brand_tone,platforms,locale`);
     const profile = profileRows?.[0];
     if (!profile) continue;
 
-    let weather: Record<string, unknown> | null = null;
-    const loc = profile.last_location || {};
-    const lat = Number(loc.latitude);
-    const lon = Number(loc.longitude);
-    if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      const locationKey = `${lat.toFixed(3)},${lon.toFixed(3)}`;
-      weather = await fetchWeather(env, locationKey, lat, lon, dateStr);
-    }
-
-    const prompt = buildPrompt(profile, weather);
+    const prompt = buildPrompt(profile, dateStr);
 
     const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -154,7 +117,7 @@ export const runDailyRecommendations = async (env: Env) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [{ role: 'system', content: prompt }],
-        max_tokens: 400,
+        max_tokens: 700,
         temperature: 0.6,
       }),
     });
@@ -171,7 +134,6 @@ export const runDailyRecommendations = async (env: Env) => {
         user_id: userId,
         email,
         recommendation_date: dateStr,
-        weather,
         recommendation,
       }),
     });
@@ -180,23 +142,23 @@ export const runDailyRecommendations = async (env: Env) => {
     if (!recommendationId) continue;
 
     const isKorean = (profile.locale || '').toLowerCase().startsWith('ko');
-    const subject = isKorean ? '오늘의 스타일 추천' : 'Your Daily Style Recommendation';
+    const subject = isKorean ? '오늘의 콘텐츠 브리핑' : 'Your Daily Content Briefing';
     const html = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #ffffff; padding: 32px;">
         <div style="max-width: 640px; margin: 0 auto;">
           <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="margin: 0; font-size: 24px;">Style<span style="color:#13c8ec;">AI</span></h1>
-            <p style="color: #8a8a8a; margin: 6px 0 0;">${isKorean ? 'AI 기반 데일리 스타일 추천' : 'AI-Powered Daily Styling'}</p>
+            <h1 style="margin: 0; font-size: 24px;">Brand<span style="color:#6C63FF;">Forge</span> AI</h1>
+            <p style="color: #8a8a8a; margin: 6px 0 0;">${isKorean ? 'AI 기반 데일리 마케팅 콘텐츠' : 'AI-Powered Daily Marketing Content'}</p>
           </div>
           <div style="background:#141414;border:1px solid #2c2c2c;border-radius:16px;padding:20px;">
-            <h2 style="margin:0 0 8px;font-size:20px;">${isKorean ? '오늘의 스타일 추천' : 'Your Daily Style Recommendation'}</h2>
+            <h2 style="margin:0 0 8px;font-size:20px;">${isKorean ? '오늘의 콘텐츠 브리핑' : 'Your Daily Content Briefing'}</h2>
             <p style="color:#b3b3b3;margin:0 0 16px;">${dateStr}</p>
             <div style="background:#0f0f0f;border:1px solid #262626;border-radius:12px;padding:16px;">
               <pre style="white-space: pre-wrap; font-family: inherit; margin: 0; color: #eaeaea; line-height:1.6;">${recommendation}</pre>
             </div>
           </div>
           <p style="color:#6f6f6f;font-size:12px;text-align:center;margin-top:16px;">
-            ${isKorean ? '이 이메일은 StyleAI에서 발송되었습니다.' : 'This email was sent by StyleAI.'}
+            ${isKorean ? '이 이메일은 BrandForge AI에서 발송되었습니다.' : 'This email was sent by BrandForge AI.'}
           </p>
         </div>
       </div>

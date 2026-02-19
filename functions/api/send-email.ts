@@ -7,12 +7,8 @@ interface Env {
 }
 
 const allowedOrigins = [
-  'https://buzzstyle.work',
-  'https://www.buzzstyle.work',
-  'https://jocoding-week3.pages.dev',
-  'http://buzzstyle.work',
-  'http://www.buzzstyle.work',
-  'http://jocoding-week3.pages.dev',
+  'https://brandforge.buzzstyle.work',
+  'https://www.brandforge.buzzstyle.work',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:4173',
@@ -84,7 +80,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
-    const { email, report, hairstyleImage, lang } = await request.json();
+    const { email, report, marketingVisual, lang } = await request.json();
 
     if (!email || !report) {
       return new Response(JSON.stringify({ error: '이메일과 리포트가 필요합니다.' }), {
@@ -110,13 +106,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const getSectionEmoji = (title: string) => {
       const t = title.toLowerCase();
-      if (t.includes('체형') || t.includes('body')) return '🧍';
-      if (t.includes('추천 스타일') || t.includes('style')) return '✨';
-      if (t.includes('컬러') || t.includes('color')) return '🎨';
-      if (t.includes('피해야') || t.includes('avoid')) return '🚫';
-      if (t.includes('코디') || t.includes('outfit')) return '🧥';
-      if (t.includes('액세서리') || t.includes('accessor')) return '💎';
-      if (t.includes('헤어') || t.includes('hair')) return '💇';
+      if (t.includes('positioning') || t.includes('포지셔닝')) return '🎯';
+      if (t.includes('visual') || t.includes('비주얼') || t.includes('시각')) return '🎨';
+      if (t.includes('typography') || t.includes('타이포')) return '🔤';
+      if (t.includes('tone') || t.includes('톤') || t.includes('voice') || t.includes('보이스')) return '🗣️';
+      if (t.includes('competitive') || t.includes('경쟁')) return '⚔️';
+      if (t.includes('platform') || t.includes('플랫폼')) return '📱';
       return '✅';
     };
 
@@ -193,15 +188,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
     const reportHtml = htmlParts.join('');
 
-    // 헤어스타일 이미지 섹션 - data: URI만 허용하여 외부 URL 주입 방지
-    const safeHairstyleImage = hairstyleImage && typeof hairstyleImage === 'string'
-      && hairstyleImage.startsWith('data:image/') ? hairstyleImage : null;
-    const hairstyleSection = safeHairstyleImage ? `
+    // 마케팅 비주얼 이미지 섹션 - data: URI만 허용하여 외부 URL 주입 방지
+    const safeMarketingVisual = marketingVisual && typeof marketingVisual === 'string'
+      && marketingVisual.startsWith('data:image/') ? marketingVisual : null;
+    const marketingVisualSection = safeMarketingVisual ? `
       <div style=\"margin-top: 32px; padding-top: 24px; border-top: 1px solid #333;\">
-        <h2 style=\"color: #13c8ec; margin-bottom: 16px; font-size: 18px;\">
-          ${isKorean ? '추천 헤어스타일' : 'Recommended Hairstyles'}
+        <h2 style=\"color: #6C63FF; margin-bottom: 16px; font-size: 18px;\">
+          ${isKorean ? '마케팅 비주얼' : 'Marketing Visual'}
         </h2>
-        <img src=\"${safeHairstyleImage}\" alt=\"Recommended hairstyles\" style=\"width: 100%; max-width: 500px; border-radius: 12px;\" />
+        <img src=\"${safeMarketingVisual}\" alt=\"Marketing Visual\" style=\"width: 100%; max-width: 500px; border-radius: 12px;\" />
       </div>
     ` : '';
 
@@ -217,33 +212,33 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         <!-- Header -->
         <div style=\"text-align: center; margin-bottom: 32px;\">
           <h1 style=\"color: #ffffff; font-size: 28px; margin: 0;\">
-            Style<span style=\"color: #13c8ec;\">AI</span>
+            Brand<span style=\"color: #6C63FF;\">Forge</span> AI
           </h1>
           <p style=\"color: #888; margin-top: 8px;\">
-            ${isKorean ? 'AI 기반 퍼스널 스타일링' : 'AI-Powered Personal Styling'}
+            ${isKorean ? 'AI 기반 브랜드 전략' : 'AI-Powered Brand Strategy'}
           </p>
         </div>
 
         <!-- Main Content -->
         <div style=\"background-color: #1a1a1a; border-radius: 16px; padding: 32px; border: 1px solid #333;\">
           <h2 style=\"color: #ffffff; font-size: 22px; margin-top: 0; margin-bottom: 24px; text-align: center;\">
-            ${isKorean ? '스타일 리포트' : 'Your Style Report'}
+            ${isKorean ? '브랜드 리포트' : 'Your Brand Report'}
           </h2>
 
           <div style=\"color: #e0e0e0;\">
             ${reportHtml}
           </div>
 
-          ${hairstyleSection}
+          ${marketingVisualSection}
         </div>
 
         <!-- Footer -->
         <div style=\"text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #333;\">
           <p style=\"color: #666; font-size: 12px; margin: 0;\">
-            ${isKorean ? '이 이메일은 StyleAI에서 발송되었습니다.' : 'This email was sent by StyleAI.'}
+            ${isKorean ? '이 이메일은 BrandForge AI에서 발송되었습니다.' : 'This email was sent by BrandForge AI.'}
           </p>
           <p style=\"color: #666; font-size: 12px; margin-top: 8px;\">
-            <a href=\"https://buzzstyle.work\" style=\"color: #13c8ec; text-decoration: none;\">
+            <a href=\"https://brandforge.buzzstyle.work\" style=\"color: #6C63FF; text-decoration: none;\">
               ${isKorean ? '웹사이트 방문하기' : 'Visit our website'}
             </a>
           </p>
@@ -270,7 +265,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       body: JSON.stringify({
         from: env.RESEND_FROM,
         to: email,
-        subject: isKorean ? '[StyleAI] 스타일 리포트가 도착했습니다' : '[StyleAI] Your Style Report is Ready',
+        subject: isKorean ? '[BrandForge AI] 브랜드 리포트가 도착했습니다' : '[BrandForge AI] Your Brand Report is Ready',
         html: htmlContent,
       }),
     });

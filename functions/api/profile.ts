@@ -19,12 +19,8 @@ const getUserIdFromToken = async (env: Env, token: string): Promise<string | nul
 };
 
 const allowedOrigins = [
-  'https://buzzstyle.work',
-  'https://www.buzzstyle.work',
-  'https://jocoding-week3.pages.dev',
-  'http://buzzstyle.work',
-  'http://www.buzzstyle.work',
-  'http://jocoding-week3.pages.dev',
+  'https://brandforge.buzzstyle.work',
+  'https://www.brandforge.buzzstyle.work',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:4173',
@@ -99,11 +95,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       email?: string;
       locale?: string;
       timezone?: string;
-      unitSystem?: string;
-      gender?: string;
-      heightCm?: number;
-      weightKg?: number;
-      stylePreferences?: Record<string, unknown>;
+      brandName?: string;
+      industry?: string;
+      targetAudience?: string;
+      brandTone?: string;
+      platforms?: string[];
+      brandColors?: Record<string, unknown>;
+      brandDescription?: string;
+      logoUrl?: string;
     };
 
     if (body.userId && body.userId !== authenticatedUserId) {
@@ -127,11 +126,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       email: body.email || null,
       locale: body.locale || null,
       timezone: body.timezone || location.timezone || null,
-      unit_system: body.unitSystem || 'metric',
-      gender: body.gender || null,
-      height_cm: body.heightCm || null,
-      weight_kg: body.weightKg || null,
-      style_preferences: body.stylePreferences || null,
+      brand_name: body.brandName || null,
+      industry: body.industry || null,
+      target_audience: body.targetAudience || null,
+      brand_tone: body.brandTone || null,
+      platforms: body.platforms || [],
+      brand_colors: body.brandColors || {},
+      brand_description: body.brandDescription || null,
+      logo_url: body.logoUrl || null,
       last_location: location,
       updated_at: new Date().toISOString(),
     };

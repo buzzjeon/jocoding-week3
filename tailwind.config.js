@@ -8,12 +8,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        "primary": "#8BCF6B",
-        "secondary": "#FFB347",
-        "background-light": "#F7F9F5",
-        "background-dark": "#0B0F10",
-        "surface": "#12181A",
-        "accent": "#5ED0C3",
+        "primary": "#6C63FF",
+        "secondary": "#FF6B6B",
+        "background-light": "#F5F3FF",
+        "background-dark": "#0B0D1A",
+        "surface": "#12152A",
+        "accent": "#4ECDC4",
       },
       fontFamily: {
         "display": ["Space Grotesk", "sans-serif"],
