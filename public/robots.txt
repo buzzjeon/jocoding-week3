@@ -1,9 +1,5 @@
-# robots.txt for StyleAI
+# robots.txt for GlobalSell AI
 User-agent: *
 Allow: /
 
-# Sitemap
-Sitemap: https://buzzstyle.work/sitemap.xml
-
-# Crawl-delay (optional, be nice to servers)
-Crawl-delay: 1
+Sitemap: https://globalsellai.buzzstyle.work/sitemap.xml

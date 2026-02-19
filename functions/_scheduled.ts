@@ -196,7 +196,7 @@ export const runDailyRecommendations = async (env: Env) => {
             </div>
           </div>
           <p style="color:#6f6f6f;font-size:12px;text-align:center;margin-top:16px;">
-            ${isKorean ? '이 이메일은 StyleAI에서 발송되었습니다.' : 'This email was sent by StyleAI.'}
+            ${isKorean ? '이 이메일은 GlobalSell AI에서 발송되었습니다.' : 'This email was sent by GlobalSell AI.'}
           </p>
         </div>
       </div>

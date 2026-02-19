@@ -88,7 +88,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Use the validated Origin header to prevent open-redirects.
     const successUrl = `${origin}/subscription-success`;
 
-    // StyleAI Daily Premium subscription product ID
+    // GlobalSell AI Pro Seller Plan subscription logic
     const SUBSCRIPTION_PRODUCT_ID = env.POLAR_ENV === 'sandbox'
       ? '6c3bb3df-11fc-4ef7-980f-4be61ce5f883'
       : '50ac0439-8520-47e8-a496-25a96d7a56b3';
