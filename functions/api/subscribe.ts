@@ -7,6 +7,7 @@ interface Env {
 }
 
 const allowedOrigins = [
+  'https://globalsellai.buzzstyle.work',
   'https://buzzstyle.work',
   'https://www.buzzstyle.work',
   'https://jocoding-week3.pages.dev',
@@ -86,12 +87,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     // Use the validated Origin header to prevent open-redirects.
-    const successUrl = `${origin}/subscription-success`;
+    const successUrl = `${origin}/payment-success`;
 
     // GlobalSell AI Pro Seller Plan subscription logic
     const SUBSCRIPTION_PRODUCT_ID = env.POLAR_ENV === 'sandbox'
       ? '6c3bb3df-11fc-4ef7-980f-4be61ce5f883'
-      : '50ac0439-8520-47e8-a496-25a96d7a56b3';
+      : '5c8a50f3-f765-4788-9674-9cec8c87b7e9';
 
     const checkoutData: Record<string, unknown> = {
       products: [SUBSCRIPTION_PRODUCT_ID],
