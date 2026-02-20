@@ -188,8 +188,8 @@ export const translations = {
       features: {
         daily: 'Daily Content Briefing',
         dailyDesc: 'Platform-specific posts, ad copy, and trending hooks delivered every morning.',
-        weather: 'Multi-Platform Strategy',
-        weatherDesc: 'Tailored content for Instagram, Twitter, LinkedIn, TikTok, and more.',
+        multiPlatform: 'Multi-Platform Strategy',
+        multiPlatformDesc: 'Tailored content for Instagram, Twitter, LinkedIn, TikTok, and more.',
         personalized: 'Brand-Aligned',
         personalizedDesc: 'Every piece of content matches your brand tone and target audience.',
       },
@@ -403,8 +403,8 @@ export const translations = {
       features: {
         daily: '일일 콘텐츠 브리핑',
         dailyDesc: '플랫폼별 포스트, 광고 카피, 트렌드 연결을 매일 아침 배달합니다.',
-        weather: '멀티 플랫폼 전략',
-        weatherDesc: '인스타그램, 트위터, 링크드인, 틱톡 등에 맞춤화된 콘텐츠.',
+        multiPlatform: '멀티 플랫폼 전략',
+        multiPlatformDesc: '인스타그램, 트위터, 링크드인, 틱톡 등에 맞춤화된 콘텐츠.',
         personalized: '브랜드 맞춤형',
         personalizedDesc: '모든 콘텐츠가 브랜드 톤과 타겟 오디언스에 맞춰 생성됩니다.',
       },

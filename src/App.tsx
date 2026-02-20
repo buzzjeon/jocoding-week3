@@ -119,37 +119,89 @@ function App() {
     setReport('')
     setMarketingVisual(null)
     try {
-      const response = await fetch('/api/brand-analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          photo,
-          brandName,
-          industry,
-          targetAudience,
-          brandTone,
-          platforms: selectedPlatforms,
-          brandDescription,
-          lang,
-        }),
-      })
+      // 1. Get AntiBot token
+      const tokenRes = await fetch('/api/request-token', { method: 'POST' })
+      const tokenData = await tokenRes.json()
+      const antiBotToken = tokenData?.token || ''
 
-      const data = await response.json()
-      if (data.error) {
-        alert(t.errors.apiError + data.error)
-      } else {
-        setReport(data.report)
-        if (data.marketingVisual) {
-          setMarketingVisual(data.marketingVisual)
-        }
-        navigateTo('brand-report')
+      // 2. Create checkout and get checkoutId
+      const checkoutRes = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-AntiBot-Token': antiBotToken,
+        },
+        body: JSON.stringify({ lang }),
+      })
+      const checkoutData = await checkoutRes.json()
+      if (!checkoutRes.ok || !checkoutData.url) {
+        alert(t.errors.apiError + (checkoutData.error || 'Checkout failed'))
+        setLoading(false)
+        return
       }
+
+      // 3. Redirect user to payment page — brand analysis happens after payment
+      // Store form data for use after payment callback
+      sessionStorage.setItem('brandforge-pending', JSON.stringify({
+        photo, brandName, industry, targetAudience, brandTone,
+        platforms: selectedPlatforms, brandDescription, lang,
+        checkoutId: checkoutData.id,
+      }))
+      window.location.href = checkoutData.url
     } catch {
       alert(t.errors.connectionFailed)
     } finally {
       setLoading(false)
     }
   }
+
+  // Handle payment success callback — resume brand analysis
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('payment') !== 'success') return
+    const pending = sessionStorage.getItem('brandforge-pending')
+    if (!pending) return
+    sessionStorage.removeItem('brandforge-pending')
+
+    const runAnalysis = async () => {
+      try {
+        const formData = JSON.parse(pending)
+        setLoading(true)
+        setBrandName(formData.brandName || '')
+        setIndustry(formData.industry || '')
+
+        // Get fresh antibot token
+        const tokenRes = await fetch('/api/request-token', { method: 'POST' })
+        const tokenData = await tokenRes.json()
+        const antiBotToken = tokenData?.token || ''
+
+        const response = await fetch('/api/brand-analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-AntiBot-Token': antiBotToken,
+          },
+          body: JSON.stringify(formData),
+        })
+
+        const data = await response.json()
+        if (data.error) {
+          alert(t.errors.apiError + data.error)
+        } else {
+          setReport(data.report)
+          if (data.marketingVisual) {
+            setMarketingVisual(data.marketingVisual)
+          }
+          navigateTo('brand-report')
+        }
+      } catch {
+        alert(t.errors.connectionFailed)
+      } finally {
+        setLoading(false)
+      }
+    }
+    runAnalysis()
+  }, [location.search])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()

@@ -1,4 +1,5 @@
 import { getClientIp, rateLimit, verifyAntiBotToken } from './_antibot';
+import { getCorsHeaders, handleCorsOptions } from './_cors';
 
 interface Env {
   RESEND_API_KEY: string;
@@ -6,39 +7,9 @@ interface Env {
   ANTI_BOT_SECRET: string;
 }
 
-const allowedOrigins = [
-  'https://brandforge.buzzstyle.work',
-  'https://www.brandforge.buzzstyle.work',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:4173',
-  'http://127.0.0.1:4173',
-];
-
-const getCorsHeaders = (origin: string | null) => {
-  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') : false;
-  if (!origin || (!allowedOrigins.includes(origin) && !isPreview)) {
-    return null;
-  }
-  return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-AntiBot-Token',
-    'Vary': 'Origin',
-  };
-};
-
 // Handle CORS preflight
 export const onRequestOptions: PagesFunction = async (context) => {
-  const origin = context.request.headers.get('Origin');
-  const corsHeaders = getCorsHeaders(origin);
-  if (!corsHeaders) {
-    return new Response('Origin not allowed', { status: 403 });
-  }
-  return new Response(null, {
-    status: 204,
-    headers: corsHeaders,
-  });
+  return handleCorsOptions(context.request);
 };
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -273,10 +244,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Resend API error:', data);
+      console.error('[send-email] Resend API error:', data);
       return new Response(JSON.stringify({
         error: isKorean ? '이메일 전송에 실패했습니다.' : 'Failed to send email.',
-        details: data.message || JSON.stringify(data),
       }), {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -292,7 +262,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
 
   } catch (error) {
-    console.error('Send email error:', error);
+    console.error('[send-email] Server error:', error);
     return new Response(JSON.stringify({
       error: '서버 오류가 발생했습니다.',
     }), {

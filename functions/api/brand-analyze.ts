@@ -1,4 +1,5 @@
 import { getClientIp, rateLimit, verifyAntiBotToken } from './_antibot';
+import { getCorsHeaders, handleCorsOptions } from './_cors';
 
 interface Env {
   OPENAI_API_KEY: string;
@@ -7,45 +8,21 @@ interface Env {
   POLAR_ENV?: 'sandbox' | 'production';
 }
 
-const allowedOrigins = [
-  'https://brandforge.buzzstyle.work',
-  'https://www.brandforge.buzzstyle.work',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:4173',
-  'http://127.0.0.1:4173',
-];
-
-const getCorsHeaders = (origin: string | null) => {
-  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') : false;
-  if (!origin || (!allowedOrigins.includes(origin) && !isPreview)) {
-    return null;
-  }
-  return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-AntiBot-Token',
-    'Vary': 'Origin',
-  };
+// Sanitize user input: strip control characters and limit length
+const sanitizeInput = (value: unknown, maxLen = 500): string => {
+  if (typeof value !== 'string') return '';
+  return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '').trim().slice(0, maxLen);
 };
 
 export const onRequestOptions: PagesFunction = async (context) => {
-  const origin = context.request.headers.get('Origin');
-  const corsHeaders = getCorsHeaders(origin);
-  if (!corsHeaders) {
-    return new Response('Origin not allowed', { status: 403 });
-  }
-  return new Response(null, {
-    status: 204,
-    headers: corsHeaders,
-  });
+  return handleCorsOptions(context.request);
 };
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
   const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') : false;
-  const corsHeaders = getCorsHeaders(origin);
+  const corsHeaders = getCorsHeaders(origin, { isSandbox: env.POLAR_ENV === 'sandbox' });
   if (!corsHeaders) {
     return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
       status: 403,
@@ -88,7 +65,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
-    const { photo, brandName, industry, targetAudience, brandTone, platforms, brandDescription, checkoutId } = body || {};
+    const raw = body || {} as Record<string, unknown>;
+    const photo = typeof raw.photo === 'string' ? raw.photo : null;
+    const brandName = sanitizeInput(raw.brandName, 200);
+    const industry = sanitizeInput(raw.industry, 200);
+    const targetAudience = sanitizeInput(raw.targetAudience, 300);
+    const brandTone = sanitizeInput(raw.brandTone, 100);
+    const platforms = Array.isArray(raw.platforms) ? raw.platforms.filter((p: unknown) => typeof p === 'string').map((p: string) => sanitizeInput(p, 50)) : [];
+    const brandDescription = sanitizeInput(raw.brandDescription, 1000);
+    const checkoutId = sanitizeInput(raw.checkoutId, 200);
 
     // 사진 크기 검증 (Base64 기준 약 7MB 제한, 바이너리 약 5MB)
     if (photo && photo.length > 7 * 1024 * 1024) {
@@ -134,7 +119,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
-    const platformsList = Array.isArray(platforms) ? platforms.join(', ') : (platforms || '');
+    const platformsList = platforms.join(', ');
 
     const userMessage = lang === 'ko'
       ? `브랜드 이름: ${brandName}${industry ? `\n산업/분야: ${industry}` : ''}${targetAudience ? `\n타겟 고객: ${targetAudience}` : ''}${brandTone ? `\n브랜드 톤: ${brandTone}` : ''}${platformsList ? `\n플랫폼: ${platformsList}` : ''}${brandDescription ? `\n브랜드 설명: ${brandDescription}` : ''}`

@@ -1,38 +1,12 @@
 import { createAntiBotToken, getClientIp, rateLimit } from './_antibot';
+import { getCorsHeaders, handleCorsOptions } from './_cors';
 
 interface Env {
   ANTI_BOT_SECRET: string;
 }
 
-const allowedOrigins = [
-  'https://brandforge.buzzstyle.work',
-  'https://www.brandforge.buzzstyle.work',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:4173',
-  'http://127.0.0.1:4173',
-];
-
-const getCorsHeaders = (origin: string | null) => {
-  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') : false;
-  if (!origin || (!allowedOrigins.includes(origin) && !isPreview)) {
-    return null;
-  }
-  return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Vary': 'Origin',
-  };
-};
-
 export const onRequestOptions: PagesFunction = async (context) => {
-  const origin = context.request.headers.get('Origin');
-  const corsHeaders = getCorsHeaders(origin);
-  if (!corsHeaders) {
-    return new Response('Origin not allowed', { status: 403 });
-  }
-  return new Response(null, { status: 204, headers: corsHeaders });
+  return handleCorsOptions(context.request);
 };
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {

@@ -1,4 +1,5 @@
 import { getClientIp, rateLimit, verifyAntiBotToken } from './_antibot';
+import { getCorsHeaders, handleCorsOptions } from './_cors';
 
 interface Env {
   POLAR_ACCESS_TOKEN: string;
@@ -6,32 +7,18 @@ interface Env {
   ANTI_BOT_SECRET: string;
 }
 
-const allowedOrigins = [
-  'https://brandforge.buzzstyle.work',
-  'https://www.brandforge.buzzstyle.work',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:4173',
-  'http://127.0.0.1:4173',
-];
-
-const getCorsHeaders = (origin: string | null, isSandbox = false) => {
-  const isPreview = origin
-    ? origin.endsWith('.pages.dev') || origin.endsWith('.cloudworkstations.dev')
-    : false;
-  if (!origin || (!allowedOrigins.includes(origin) && !(isSandbox && isPreview))) {
-    return null;
-  }
-  return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-AntiBot-Token',
-    'Vary': 'Origin',
-  };
-};
-
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
+  const isSandbox = env.POLAR_ENV === 'sandbox';
+  const origin = request.headers.get('Origin') || null;
+  const corsHeaders = getCorsHeaders(origin, { isSandbox });
+  if (!corsHeaders) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const body = await request.json().catch(() => ({})) as {
       origin?: string;
@@ -43,16 +30,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const lang = body.lang === 'en' || body.lang === 'ko'
       ? body.lang
       : (headerLang.startsWith('ko') ? 'ko' : 'en');
-
-    const isSandbox = env.POLAR_ENV === 'sandbox';
-    const origin = request.headers.get('Origin') || null;
-    const corsHeaders = getCorsHeaders(origin, isSandbox);
-    if (!corsHeaders) {
-      return new Response(JSON.stringify({ error: lang === 'ko' ? '허용되지 않은 Origin입니다.' : 'Origin not allowed' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
 
     const ip = getClientIp(request);
     const limiter = rateLimit(`subscribe:${ip}`, 6, 60_000);
@@ -84,8 +61,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Use the validated Origin header to prevent open-redirects.
     const successUrl = `${origin}/subscription-success`;
 
-    // StyleAI Daily Premium subscription product ID
-    const SUBSCRIPTION_PRODUCT_ID = env.POLAR_ENV === 'sandbox'
+    // BrandForge Daily Premium subscription product ID
+    const SUBSCRIPTION_PRODUCT_ID = isSandbox
       ? '6c3bb3df-11fc-4ef7-980f-4be61ce5f883'
       : '50ac0439-8520-47e8-a496-25a96d7a56b3';
 
@@ -131,9 +108,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('[subscribe] Polar API error:', response.status, JSON.stringify(data));
       return new Response(JSON.stringify({
-        error: 'Subscription checkout failed',
-        details: data.detail || JSON.stringify(data)
+        error: lang === 'ko' ? '구독 체크아웃 생성에 실패했습니다.' : 'Subscription checkout failed',
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -147,6 +124,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    console.error('[subscribe] Server error:', error);
     return new Response(JSON.stringify({
       error: 'Server error',
     }), {
@@ -156,15 +134,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 };
 
-export const onRequestOptions: PagesFunction = async (context) => {
-  const origin = context.request.headers.get('Origin');
-  const corsHeaders = getCorsHeaders(origin);
-  if (!corsHeaders) {
-    return new Response('Origin not allowed', { status: 403 });
-  }
-  return new Response(null, {
-    headers: {
-      ...corsHeaders,
-    },
-  });
+export const onRequestOptions: PagesFunction<Env> = async (context) => {
+  const isSandbox = context.env.POLAR_ENV === 'sandbox';
+  return handleCorsOptions(context.request, { isSandbox });
 };

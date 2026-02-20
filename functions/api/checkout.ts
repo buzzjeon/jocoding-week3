@@ -1,34 +1,11 @@
 import { getClientIp, rateLimit, verifyAntiBotToken } from './_antibot';
+import { getCorsHeaders, handleCorsOptions } from './_cors';
 
 interface Env {
   POLAR_ACCESS_TOKEN: string;
   POLAR_ENV?: 'sandbox' | 'production';
   ANTI_BOT_SECRET: string;
 }
-
-const allowedOrigins = [
-  'https://brandforge.buzzstyle.work',
-  'https://www.brandforge.buzzstyle.work',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:4173',
-  'http://127.0.0.1:4173',
-];
-
-const getCorsHeaders = (origin: string | null, isSandbox = false) => {
-  const isPreview = origin
-    ? origin.endsWith('.pages.dev') || origin.endsWith('.cloudworkstations.dev')
-    : false;
-  if (!origin || (!allowedOrigins.includes(origin) && !(isSandbox && isPreview))) {
-    return null;
-  }
-  return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-AntiBot-Token',
-    'Vary': 'Origin',
-  };
-};
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
@@ -39,7 +16,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const lang = body?.lang === 'en' || body?.lang === 'ko'
     ? body.lang
     : (headerLang.startsWith('ko') ? 'ko' : 'en');
-  const corsHeaders = getCorsHeaders(origin, isSandbox);
+  const corsHeaders = getCorsHeaders(origin, { isSandbox });
   if (!corsHeaders) {
     return new Response(JSON.stringify({ error: lang === 'ko' ? '허용되지 않은 Origin입니다.' : 'Origin not allowed' }), {
       status: 403,
@@ -110,9 +87,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('[checkout] Polar API error:', response.status, JSON.stringify(data));
       return new Response(JSON.stringify({
         error: lang === 'ko' ? 'Checkout 생성 실패' : 'Failed to create checkout',
-        details: data.detail || JSON.stringify(data)
       }), {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -126,9 +103,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   } catch (error) {
+    console.error('[checkout] Server error:', error);
     return new Response(JSON.stringify({
-      error: '서버 오류가 발생했습니다.',
-      details: error instanceof Error ? error.message : String(error)
+      error: lang === 'ko' ? '서버 오류가 발생했습니다.' : 'Server error',
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -136,14 +113,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 };
 
-export const onRequestOptions: PagesFunction = async (context) => {
-  const origin = context.request.headers.get('Origin');
-  const corsHeaders = getCorsHeaders(origin);
-  if (!corsHeaders) {
-    return new Response('Origin not allowed', { status: 403 });
-  }
-  return new Response(null, {
-    status: 204,
-    headers: corsHeaders,
-  });
+export const onRequestOptions: PagesFunction<Env> = async (context) => {
+  const isSandbox = context.env.POLAR_ENV === 'sandbox';
+  return handleCorsOptions(context.request, { isSandbox });
 };

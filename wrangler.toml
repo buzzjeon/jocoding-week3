@@ -2,4 +2,4 @@ name = "brandforge"
 compatibility_date = "2024-10-01"
 
 [triggers]
-crons = ["0 8 * * *"]
+crons = ["0 22 * * *"]
