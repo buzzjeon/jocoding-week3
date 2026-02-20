@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { translations } from './lib/translations'
@@ -6,7 +6,6 @@ import type { User } from '@supabase/supabase-js'
 
 type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'login' | 'signup' | 'mypage' | 'subscription' | 'about' | 'faq'
 type Language = 'en' | 'ko'
-type UnitSystem = 'metric' | 'imperial'
 
 const getInitialLang = (): Language => {
   if (typeof window === 'undefined') return 'ko'
@@ -48,12 +47,6 @@ function App() {
   }
 
   const [lang, setLang] = useState<Language>(getInitialLang)
-  const [unitSystem, setUnitSystem] = useState<UnitSystem>('metric')
-  const [photo, setPhoto] = useState<string | null>(null)
-  const [category, setCategory] = useState('fashion')
-  const [targetMarket, setTargetMarket] = useState('')
-  const [targetPrice, setTargetPrice] = useState('')
-  const [report, setReport] = useState('')
   const [loading, setLoading] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -61,7 +54,6 @@ function App() {
   const [user, setUser] = useState<User | null>(null)
   const [dailyRec, setDailyRec] = useState<{ recommendation_date: string; recommendation: string } | null>(null)
   const [dailyRecLoading, setDailyRecLoading] = useState(false)
-  const [emailSending, setEmailSending] = useState(false)
 
   const t = translations[lang]
 
