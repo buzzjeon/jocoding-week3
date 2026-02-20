@@ -108,6 +108,35 @@ function App() {
     )
   }
 
+  // Helper: fetch AntiBot token from server
+  const fetchAntiBotToken = async (): Promise<string> => {
+    const res = await fetch('/api/request-token', { method: 'POST' })
+    const data = await res.json()
+    if (data?.disabled) return '' // antibot not configured — proceed without token
+    return data?.token || ''
+  }
+
+  // Helper: call brand-analyze with proper headers
+  const callBrandAnalyze = async (formData: Record<string, unknown>, antiBotToken: string) => {
+    const response = await fetch('/api/brand-analyze', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(antiBotToken ? { 'X-AntiBot-Token': antiBotToken } : {}),
+      },
+      body: JSON.stringify(formData),
+    })
+    return response.json()
+  }
+
+  // Check if current environment is preview (skips payment on server side)
+  const isPreviewEnv = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.endsWith('.cloudworkstations.dev') ||
+    window.location.hostname.endsWith('.pages.dev')
+  )
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!brandName || !industry || !targetAudience) {
@@ -119,35 +148,47 @@ function App() {
     setReport('')
     setMarketingVisual(null)
     try {
-      // 1. Get AntiBot token
-      const tokenRes = await fetch('/api/request-token', { method: 'POST' })
-      const tokenData = await tokenRes.json()
-      const antiBotToken = tokenData?.token || ''
+      const antiBotToken = await fetchAntiBotToken()
 
-      // 2. Create checkout and get checkoutId
-      const checkoutRes = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-AntiBot-Token': antiBotToken,
-        },
-        body: JSON.stringify({ lang }),
-      })
-      const checkoutData = await checkoutRes.json()
-      if (!checkoutRes.ok || !checkoutData.url) {
-        alert(t.errors.apiError + (checkoutData.error || 'Checkout failed'))
-        setLoading(false)
-        return
-      }
-
-      // 3. Redirect user to payment page — brand analysis happens after payment
-      // Store form data for use after payment callback
-      sessionStorage.setItem('brandforge-pending', JSON.stringify({
+      const formData = {
         photo, brandName, industry, targetAudience, brandTone,
         platforms: selectedPlatforms, brandDescription, lang,
-        checkoutId: checkoutData.id,
-      }))
-      window.location.href = checkoutData.url
+        checkoutId: '', // filled after payment in production
+      }
+
+      if (isPreviewEnv) {
+        // Preview/dev: skip payment, call brand-analyze directly
+        // Server skips checkoutId verification for preview origins
+        const data = await callBrandAnalyze(formData, antiBotToken)
+        if (data.error) {
+          alert(t.errors.apiError + data.error)
+        } else {
+          setReport(data.report)
+          if (data.marketingVisual) setMarketingVisual(data.marketingVisual)
+          navigateTo('brand-report')
+        }
+      } else {
+        // Production: create checkout → redirect to payment
+        const checkoutRes = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-AntiBot-Token': antiBotToken,
+          },
+          body: JSON.stringify({ lang }),
+        })
+        const checkoutData = await checkoutRes.json()
+        if (!checkoutRes.ok || !checkoutData.url) {
+          alert(t.errors.apiError + (checkoutData.error || 'Checkout failed'))
+          setLoading(false)
+          return
+        }
+
+        sessionStorage.setItem('brandforge-pending', JSON.stringify({
+          ...formData, checkoutId: checkoutData.id,
+        }))
+        window.location.href = checkoutData.url
+      }
     } catch {
       alert(t.errors.connectionFailed)
     } finally {
@@ -155,7 +196,7 @@ function App() {
     }
   }
 
-  // Handle payment success callback — resume brand analysis
+  // Handle payment success callback — resume brand analysis after checkout
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     if (params.get('payment') !== 'success') return
@@ -170,28 +211,14 @@ function App() {
         setBrandName(formData.brandName || '')
         setIndustry(formData.industry || '')
 
-        // Get fresh antibot token
-        const tokenRes = await fetch('/api/request-token', { method: 'POST' })
-        const tokenData = await tokenRes.json()
-        const antiBotToken = tokenData?.token || ''
+        const antiBotToken = await fetchAntiBotToken()
+        const data = await callBrandAnalyze(formData, antiBotToken)
 
-        const response = await fetch('/api/brand-analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-AntiBot-Token': antiBotToken,
-          },
-          body: JSON.stringify(formData),
-        })
-
-        const data = await response.json()
         if (data.error) {
           alert(t.errors.apiError + data.error)
         } else {
           setReport(data.report)
-          if (data.marketingVisual) {
-            setMarketingVisual(data.marketingVisual)
-          }
+          if (data.marketingVisual) setMarketingVisual(data.marketingVisual)
           navigateTo('brand-report')
         }
       } catch {
