@@ -87,7 +87,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // StyleAI Daily Premium subscription product ID
     const SUBSCRIPTION_PRODUCT_ID = env.POLAR_ENV === 'sandbox'
       ? '6c3bb3df-11fc-4ef7-980f-4be61ce5f883'
-      : '50ac0439-8520-47e8-a496-25a96d7a56b3';
+      : '0acd2acc-4ab9-42ef-a2c6-6cbf9d751299';
 
     const checkoutData: Record<string, unknown> = {
       products: [SUBSCRIPTION_PRODUCT_ID],

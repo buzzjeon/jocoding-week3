@@ -93,7 +93,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       : 'https://api.polar.sh';
     const productId = isSandbox
       ? '4da76d3a-45ee-4f2d-a5cc-d9e5183cd38c'
-      : '7e50b910-c6fe-40b6-bb6d-e4f99c040130';
+      : '642f17b8-71ab-4cc2-8d77-d07315de1c6c';
     console.log(`[checkout] polarEnv=${isSandbox ? 'sandbox' : 'production'}`);
     const response = await fetch(`${polarApiBase}/v1/checkouts/`, {
       method: 'POST',
