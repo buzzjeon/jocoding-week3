@@ -28,7 +28,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   try {
     const body: any = await request.json();
-    const { photo, gender: category, height: targetMarket, weight: targetPrice, unitSystem, lang } = body || {};
+    const { photo, category, targetMarket, targetPrice, gender, height, weight, unitSystem, lang } = body || {};
+    const resolvedCategory = category || gender;
+    const resolvedTargetMarket = targetMarket || height;
+    const resolvedTargetPrice = targetPrice || weight;
 
     if (!photo) {
       return new Response(JSON.stringify({ error: 'Product photo is required' }), {
@@ -44,9 +47,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 Analyze the provided product image and generate a high-quality sales listing.
 
 Product Context:
-- Category: ${category}
-- Target Market: ${targetMarket}
-- Target Price: ${targetPrice} USD
+- Category: ${resolvedCategory}
+- Target Market: ${resolvedTargetMarket}
+- Target Price: ${resolvedTargetPrice} USD
 - Style: ${listingStyle}
 
 Please provide the following sections in your response:
@@ -54,7 +57,7 @@ Please provide the following sections in your response:
 2. 5 Key Product Features (Bullet points highlighting unique value propositions)
 3. Product Description (Compelling storytelling emphasizing quality, utility, and benefits)
 4. 20 Optimized Search Keywords/Tags (Separated by commas)
-5. Pricing & Competition Insight (Brief comment on the competitiveness of ${targetPrice} USD in ${targetMarket})
+5. Pricing & Competition Insight (Brief comment on the competitiveness of ${resolvedTargetPrice} USD in ${resolvedTargetMarket})
 
 Language: Please write the entire report in ${isKorean ? 'Korean' : 'English'}.
 Format: Use clear Markdown headings and bullet points. Do not include introductory or concluding conversational text.`;

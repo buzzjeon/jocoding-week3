@@ -1,10 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ChangeEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { translations } from './lib/translations'
 import type { User } from '@supabase/supabase-js'
 
-type Page = 'landing' | 'form' | 'result' | 'payment-success' | 'login' | 'signup' | 'mypage' | 'subscription' | 'about' | 'faq'
+type Page =
+  | 'landing'
+  | 'form'
+  | 'result'
+  | 'payment-success'
+  | 'login'
+  | 'signup'
+  | 'mypage'
+  | 'subscription'
+  | 'about'
+  | 'faq'
+  | 'contact'
+  | 'privacy'
 type Language = 'en' | 'ko'
 
 const getInitialLang = (): Language => {
@@ -26,6 +38,8 @@ const pageRoutes: Record<Page, string> = {
   subscription: '/subscription',
   about: '/about',
   faq: '/faq',
+  contact: '/contact',
+  privacy: '/privacy',
 }
 
 const routeToPage: Record<string, Page> = Object.entries(pageRoutes).reduce((acc, [page, path]) => {
@@ -54,6 +68,13 @@ function App() {
   const [user, setUser] = useState<User | null>(null)
   const [dailyRec, setDailyRec] = useState<{ recommendation_date: string; recommendation: string } | null>(null)
   const [dailyRecLoading, setDailyRecLoading] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState('')
+  const [category, setCategory] = useState('')
+  const [targetMarket, setTargetMarket] = useState('')
+  const [targetPrice, setTargetPrice] = useState('')
+  const [listingStyle, setListingStyle] = useState<'metric' | 'imperial'>('metric')
+  const [listingResult, setListingResult] = useState('')
+  const [formError, setFormError] = useState('')
 
   const t = translations[lang]
 
@@ -89,6 +110,55 @@ function App() {
   useEffect(() => {
     if ((page === 'mypage' || page === 'landing') && user) fetchDailyTrends()
   }, [page, user])
+
+  const onPhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') setPhotoPreview(reader.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const submitListingGenerator = async () => {
+    if (!photoPreview || !category || !targetMarket || !targetPrice) {
+      setFormError(t.errors.fillAll)
+      return
+    }
+
+    setFormError('')
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/consult', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          photo: photoPreview,
+          category,
+          targetMarket,
+          targetPrice,
+          unitSystem: listingStyle,
+          lang,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        setFormError(`${t.errors.apiError}${data?.error || ''}`)
+        return
+      }
+
+      setListingResult(data?.report || '')
+      navigateTo('result')
+    } catch {
+      setFormError(t.errors.connectionFailed)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // --- UI Components ---
   const GlobalNavbar = () => (
@@ -241,8 +311,8 @@ function App() {
             <h4 className="text-white font-black mb-8 uppercase tracking-[0.2em] text-[10px]">Support</h4>
             <ul className="space-y-5 text-white/40 text-sm font-bold">
               <li onClick={() => navigateTo('faq')} className="hover:text-primary cursor-pointer transition-colors">Help Center</li>
-              <li onClick={() => navigateTo('about')} className="hover:text-primary cursor-pointer transition-colors">Contact Us</li>
-              <li className="hover:text-primary cursor-pointer transition-colors">Privacy Policy</li>
+              <li onClick={() => navigateTo('contact')} className="hover:text-primary cursor-pointer transition-colors">Contact Us</li>
+              <li onClick={() => navigateTo('privacy')} className="hover:text-primary cursor-pointer transition-colors">Privacy Policy</li>
             </ul>
           </div>
         </div>
@@ -250,8 +320,8 @@ function App() {
       <div className="max-w-7xl mx-auto border-t border-white/5 pt-12 flex flex-col md:flex-row justify-between items-center gap-8">
         <p className="text-white/20 text-xs font-black tracking-widest uppercase italic">Built for the next generation of global sellers</p>
         <div className="flex gap-10 text-white/20 text-[10px] font-black uppercase tracking-widest">
-          <span className="hover:text-white cursor-pointer transition-colors">Terms</span>
-          <span className="hover:text-white cursor-pointer transition-colors">Privacy</span>
+          <span onClick={() => navigateTo('faq')} className="hover:text-white cursor-pointer transition-colors">Terms</span>
+          <span onClick={() => navigateTo('privacy')} className="hover:text-white cursor-pointer transition-colors">Privacy</span>
           <span className="hover:text-white cursor-pointer transition-colors">Cookies</span>
         </div>
       </div>
@@ -410,6 +480,109 @@ function App() {
           </div>
         )}
 
+
+        {page === 'form' && (
+          <div className="pt-24 pb-32 px-6 max-w-4xl mx-auto">
+            <div className="glass p-10 md:p-14 rounded-[3rem] border border-white/10">
+              <h2 className="text-4xl font-black tracking-tight mb-3">{t.form.title}</h2>
+              <p className="text-white/50 mb-10 font-bold">{t.form.description}</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <label className="glass rounded-2xl border border-white/10 p-6 cursor-pointer block">
+                  <p className="text-white/70 text-sm font-black mb-4">{t.form.uploadPhoto}</p>
+                  <input type="file" accept="image/*" onChange={onPhotoChange} className="w-full text-sm" />
+                </label>
+                <div className="glass rounded-2xl border border-white/10 p-6">
+                  <p className="text-white/70 text-sm font-black mb-4">{t.form.units}</p>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => setListingStyle('metric')} className={`px-4 py-2 rounded-xl text-sm font-bold ${listingStyle === 'metric' ? 'bg-primary text-background-dark' : 'bg-white/5 text-white/70'}`}>{t.form.metric}</button>
+                    <button type="button" onClick={() => setListingStyle('imperial')} className={`px-4 py-2 rounded-xl text-sm font-bold ${listingStyle === 'imperial' ? 'bg-primary text-background-dark' : 'bg-white/5 text-white/70'}`}>{t.form.imperial}</button>
+                  </div>
+                </div>
+              </div>
+
+              {photoPreview && <img src={photoPreview} alt="preview" className="w-full h-56 object-cover rounded-2xl border border-white/10 mb-6" />}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <select value={category} onChange={(e) => setCategory(e.target.value)} className="bg-white/5 border border-white/10 rounded-2xl px-4 py-4 font-bold">
+                  <option value="">{t.form.category}</option>
+                  {t.form.options.category.map((item) => <option key={item.value} value={item.label}>{item.label}</option>)}
+                </select>
+                <input value={targetMarket} onChange={(e) => setTargetMarket(e.target.value)} placeholder={t.form.targetMarket} className="bg-white/5 border border-white/10 rounded-2xl px-4 py-4 font-bold" />
+                <input value={targetPrice} onChange={(e) => setTargetPrice(e.target.value)} placeholder={t.form.targetPrice} className="bg-white/5 border border-white/10 rounded-2xl px-4 py-4 font-bold" />
+              </div>
+
+              {formError && <p className="text-red-400 font-bold mt-5">{formError}</p>}
+
+              <button onClick={submitListingGenerator} disabled={loading} className="w-full mt-8 h-14 rounded-2xl bg-primary text-background-dark font-black text-lg">
+                {loading ? t.form.analyzing : t.form.submit}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {page === 'result' && (
+          <div className="pt-24 pb-32 px-6 max-w-4xl mx-auto">
+            <div className="glass p-10 md:p-14 rounded-[3rem] border border-white/10">
+              <h2 className="text-4xl font-black tracking-tight mb-3">{t.result.title}</h2>
+              <p className="text-white/50 mb-8 font-bold">{t.result.description}</p>
+              <div className="whitespace-pre-wrap leading-relaxed text-white/90 bg-black/20 rounded-2xl border border-white/10 p-6">{listingResult || 'No listing generated yet.'}</div>
+              <div className="flex flex-wrap gap-4 mt-8">
+                <button onClick={() => navigateTo('form')} className="px-6 py-3 rounded-xl bg-primary text-background-dark font-black">{t.result.tryAgain}</button>
+                <button onClick={() => navigateTo('landing')} className="px-6 py-3 rounded-xl border border-white/20 font-black">{t.result.backHome}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {page === 'about' && (
+          <div className="pt-24 pb-32 px-6 max-w-4xl mx-auto">
+            <div className="glass p-12 rounded-[3rem] border border-white/10">
+              <h2 className="text-5xl font-black mb-6 tracking-tight">About GlobalSell AI</h2>
+              <p className="text-white/70 leading-relaxed font-bold">GlobalSell AI helps online sellers generate high-converting listings and discover global trend signals faster. We combine vision AI with marketplace SEO to reduce manual work and improve sell-through performance.</p>
+            </div>
+          </div>
+        )}
+
+        {page === 'faq' && (
+          <div className="pt-24 pb-32 px-6 max-w-4xl mx-auto">
+            <div className="glass p-12 rounded-[3rem] border border-white/10">
+              <h2 className="text-5xl font-black mb-10 tracking-tight">Help Center</h2>
+              <div className="space-y-8">
+                <div><h3 className="text-xl font-black mb-2">How do I use AI Listing Generator?</h3><p className="text-white/60">Go to AI Listing Generator, upload a product image, enter category/market/price, then click generate.</p></div>
+                <div><h3 className="text-xl font-black mb-2">What does Pro include?</h3><p className="text-white/60">Unlimited listing generations, deeper trend recommendations, and priority support.</p></div>
+                <div><h3 className="text-xl font-black mb-2">Can I cancel my subscription?</h3><p className="text-white/60">Yes. You can manage and cancel your plan from your billing portal at any time.</p></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {page === 'contact' && (
+          <div className="pt-24 pb-32 px-6 max-w-4xl mx-auto">
+            <div className="glass p-12 rounded-[3rem] border border-white/10">
+              <h2 className="text-5xl font-black mb-8 tracking-tight">Contact Us</h2>
+              <div className="space-y-4 text-white/70 font-bold">
+                <p>Email: support@globalsell.ai</p>
+                <p>Business: biz@globalsell.ai</p>
+                <p>Response SLA: within 24 hours (weekdays)</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {page === 'privacy' && (
+          <div className="pt-24 pb-32 px-6 max-w-4xl mx-auto">
+            <div className="glass p-12 rounded-[3rem] border border-white/10">
+              <h2 className="text-5xl font-black mb-8 tracking-tight">Privacy Policy</h2>
+              <div className="space-y-5 text-white/70 leading-relaxed">
+                <p>We collect account email, usage events, and uploaded product images only to provide listing generation and subscription services.</p>
+                <p>Uploaded images are processed for AI analysis and are not sold to third parties. Billing is handled through secure external providers.</p>
+                <p>You can request account deletion or data export by contacting support@globalsell.ai.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {page === 'mypage' && (
           <div className="pt-24 pb-32 px-6 max-w-5xl mx-auto">
             <header className="flex flex-col md:flex-row md:items-center justify-between mb-16 gap-6">
@@ -539,9 +712,22 @@ function App() {
               Exclusive Seller Benefit
             </div>
             <h2 className="text-6xl lg:text-7xl font-black mb-8 tracking-tighter leading-tight">Scale Without Limits</h2>
-            <p className="text-white/40 text-xl lg:text-2xl mb-24 max-w-3xl mx-auto font-bold tracking-tight leading-relaxed">
+            <p className="text-white/40 text-xl lg:text-2xl mb-16 max-w-3xl mx-auto font-bold tracking-tight leading-relaxed">
               Unlock the full power of AI vision and global market intelligence to dominate international marketplaces.
             </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14 text-left">
+              {[
+                { title: 'Unlimited AI Listing Generator', desc: 'No daily caps. Generate listing drafts for every SKU instantly.' },
+                { title: 'Advanced Trend Intelligence', desc: 'Get richer daily sourcing signals and keyword opportunities.' },
+                { title: 'Priority Seller Support', desc: 'Dedicated support responses and faster issue resolution.' },
+              ].map((benefit) => (
+                <div key={benefit.title} className="glass p-6 rounded-2xl border border-primary/20">
+                  <h4 className="text-lg font-black mb-2">{benefit.title}</h4>
+                  <p className="text-white/60 font-bold text-sm">{benefit.desc}</p>
+                </div>
+              ))}
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-stretch max-w-5xl mx-auto">
               {/* Free Card (Smaller) */}
