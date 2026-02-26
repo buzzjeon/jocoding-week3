@@ -7,7 +7,6 @@ interface Env {
   OPENAI_API_KEY: string;
   RESEND_API_KEY: string;
   RESEND_FROM: string;
-  OPENWEATHER_API_KEY: string;
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {

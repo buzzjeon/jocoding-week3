@@ -95,7 +95,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const polarApiBase = isSandbox
       ? 'https://sandbox-api.polar.sh'
       : 'https://api.polar.sh';
-    console.log(`[subscribe] polarEnv=${isSandbox ? 'sandbox' : 'production'}`);
+    // polarEnv log removed — avoid exposing environment mode in production
     const response = await fetch(`${polarApiBase}/v1/checkouts/`, {
       method: 'POST',
       headers: {

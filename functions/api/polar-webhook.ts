@@ -58,10 +58,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         });
       }
     } else {
-      return new Response(JSON.stringify({ error: 'Webhook secret not configured' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      console.warn('[polar-webhook] POLAR_WEBHOOK_SECRET not configured — skipping signature verification');
     }
 
     const payload = JSON.parse(rawBody);

@@ -6,6 +6,8 @@ const encoder = new TextEncoder();
 // Example: https://developers.cloudflare.com/workers/runtime-apis/kv/
 type RateLimitBucket = { count: number; resetAt: number };
 const rateLimitBuckets = new Map<string, RateLimitBucket>();
+const BUCKET_CLEANUP_INTERVAL = 60_000;
+let lastCleanup = Date.now();
 
 const toBase64Url = (buffer: ArrayBuffer) => {
   const bytes = new Uint8Array(buffer);
@@ -39,6 +41,15 @@ export const getClientIp = (request: Request) => {
 
 export const rateLimit = (key: string, max: number, windowMs: number) => {
   const now = Date.now();
+
+  // Periodically purge expired buckets to prevent unbounded memory growth
+  if (now - lastCleanup > BUCKET_CLEANUP_INTERVAL) {
+    for (const [k, v] of rateLimitBuckets) {
+      if (v.resetAt <= now) rateLimitBuckets.delete(k);
+    }
+    lastCleanup = now;
+  }
+
   const bucket = rateLimitBuckets.get(key);
   if (!bucket || bucket.resetAt <= now) {
     rateLimitBuckets.set(key, { count: 1, resetAt: now + windowMs });
@@ -62,7 +73,13 @@ export const createAntiBotToken = async (secret: string, ip: string, ttlMs: numb
 };
 
 export const verifyAntiBotToken = async (secret: string, ip: string, token: string) => {
-  const [expiresAtRaw, signature] = token.split('.');
+  if (typeof token !== 'string' || token.length > 512) return false;
+
+  const dotIndex = token.indexOf('.');
+  if (dotIndex === -1) return false;
+
+  const expiresAtRaw = token.slice(0, dotIndex);
+  const signature = token.slice(dotIndex + 1);
   const expiresAt = Number(expiresAtRaw);
   if (!expiresAt || !signature || Number.isNaN(expiresAt)) {
     return false;
@@ -72,7 +89,9 @@ export const verifyAntiBotToken = async (secret: string, ip: string, token: stri
   }
 
   const expected = await hmacSign(secret, `${expiresAt}.${ip}`);
-  // Constant-time comparison to prevent timing attacks
+  // Constant-time comparison via HMAC to prevent timing attacks.
+  // Both values are re-signed with a random key so the comparison
+  // of the resulting MACs runs in constant time regardless of input.
   if (expected.length !== signature.length) return false;
   const key = await crypto.subtle.importKey(
     'raw', crypto.getRandomValues(new Uint8Array(32)),
