@@ -2013,11 +2013,23 @@ function App() {
       }
 
       setReport(data.report ?? '')
-      if (data.hairstyleImage) {
-        setHairstyleImage(data.hairstyleImage)
-      }
       clearPendingConsult()
       navigateTo('result')
+
+      // 사진이 있으면 헤어스타일 이미지 별도 요청 (백그라운드, 실패해도 무관)
+      if (normalized.photo) {
+        const hairstyleToken = await getAntiBotToken()
+        const hairstyleHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+        if (hairstyleToken) hairstyleHeaders['X-AntiBot-Token'] = hairstyleToken
+        fetch('/api/hairstyle', {
+          method: 'POST',
+          headers: hairstyleHeaders,
+          body: JSON.stringify({ photo: normalized.photo, gender: normalized.gender, lang: normalized.lang }),
+        })
+          .then(r => r.json())
+          .then(d => { if (d.hairstyleImage) setHairstyleImage(d.hairstyleImage) })
+          .catch(() => { /* 이미지 생성 실패는 무시 */ })
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       alert(t.errors.connectionFailed + (msg ? `\n(${msg})` : ''))

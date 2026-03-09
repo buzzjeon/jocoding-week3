@@ -52,7 +52,11 @@ export const onRequestOptions: PagesFunction = async (context) => {
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
-  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') : false;
+  const isPreview = origin
+    ? origin.endsWith('.cloudworkstations.dev')
+      || origin.startsWith('http://localhost')
+      || origin.startsWith('http://127.0.0.1')
+    : false;
   const corsHeaders = getCorsHeaders(origin);
   if (!corsHeaders) {
     return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
@@ -259,63 +263,8 @@ Write in a friendly, professional tone.`;
 
     const report = data.choices?.[0]?.message?.content || '';
 
-    // 사진이 있으면 헤어스타일 이미지 생성
-    let hairstyleImage = null;
-    if (photo) {
-      try {
-        // base64 데이터에서 실제 이미지 데이터 추출 (CPU 효율적인 방법)
-        const base64Data = photo.split(',')[1];
-        const binaryData = atob(base64Data);
-        const bytes = Uint8Array.from(binaryData, c => c.charCodeAt(0));
-        const imageBlob = new Blob([bytes], { type: 'image/png' });
-
-        const formData = new FormData();
-        formData.append('image', imageBlob, 'photo.png');
-        formData.append('prompt', `너는 최고의 헤어스타일리스트야. 3x3 그리드로, 어떤 헤어스타일인지 설명과 함께 첨부한 사진속 사람이랑 최고로 잘 어울리는 헤어스타일 9개 생성해줘. ${genderText}에게 어울리는 스타일로 만들어줘.`);
-        formData.append('model', 'gpt-image-1');
-        formData.append('n', '1');
-        formData.append('size', '512x512');
-        formData.append('quality', 'low');
-
-        const imageUrl = proxyUrl
-          ? `${proxyUrl}/openai/v1/images/edits`
-          : 'https://api.openai.com/v1/images/edits';
-        const imageHeaders: Record<string, string> = {};
-        if (proxyUrl && proxySecret) {
-          imageHeaders['X-Proxy-Secret'] = proxySecret;
-        } else {
-          imageHeaders['Authorization'] = `Bearer ${env.OPENAI_API_KEY}`;
-        }
-        const imageAbort = new AbortController();
-        const imageTimeout = setTimeout(() => imageAbort.abort(), 25_000);
-        const imageResponse = await fetch(imageUrl, {
-          method: 'POST',
-          headers: imageHeaders,
-          body: formData,
-          signal: imageAbort.signal,
-        });
-        clearTimeout(imageTimeout);
-
-        let imageData: unknown;
-        try {
-          imageData = await imageResponse.json();
-        } catch {
-          const raw = await imageResponse.text().catch(() => '');
-          console.error('이미지 API non-JSON 응답:', imageResponse.status, raw.slice(0, 200));
-          imageData = null;
-        }
-
-        if (imageResponse.ok && (imageData as any)?.data?.[0]?.b64_json) {
-          hairstyleImage = `data:image/png;base64,${(imageData as any).data[0].b64_json}`;
-        } else if (!imageResponse.ok) {
-          console.error('이미지 API 오류:', imageResponse.status, JSON.stringify(imageData)?.slice(0, 200));
-        }
-      } catch (imageError) {
-        console.error('헤어스타일 이미지 생성 오류:', imageError instanceof Error ? imageError.message : String(imageError));
-      }
-    }
-
-    return new Response(JSON.stringify({ report, hairstyleImage }), {
+    // 이미지 생성은 /api/hairstyle 별도 API로 분리됨 (30초 타임아웃 방지)
+    return new Response(JSON.stringify({ report, hairstyleImage: null }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   } catch (error) {
