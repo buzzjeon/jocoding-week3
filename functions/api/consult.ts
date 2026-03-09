@@ -56,8 +56,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const isPreview = origin
     ? origin.endsWith('.cloudworkstations.dev')
       || origin.endsWith('.pages.dev')
-      || origin.startsWith('http://localhost')
-      || origin.startsWith('http://127.0.0.1')
     : false;
   const corsHeaders = getCorsHeaders(origin);
   if (!corsHeaders) {
@@ -129,18 +127,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       }
       const isSandbox = env.POLAR_ENV === 'sandbox';
       const polarApiBase = isSandbox ? 'https://sandbox-api.polar.sh' : 'https://api.polar.sh';
+      console.log(`consult: verifying checkout ${checkoutId} via ${isSandbox ? 'sandbox' : 'production'} polar`);
       const checkoutRes = await fetch(`${polarApiBase}/v1/checkouts/${encodeURIComponent(checkoutId)}`, {
         headers: { 'Authorization': `Bearer ${env.POLAR_ACCESS_TOKEN}` },
       });
+      console.log(`consult: polar checkout status=${checkoutRes.status}`);
       if (!checkoutRes.ok) {
-        return new Response(JSON.stringify({ error: lang === 'ko' ? '결제 정보를 확인할 수 없습니다.' : 'Unable to verify payment.' }), {
+        let polarErr = '';
+        try { polarErr = JSON.stringify(await checkoutRes.json()); } catch { polarErr = await checkoutRes.text().catch(() => ''); }
+        console.error('consult: polar verify failed', checkoutRes.status, polarErr.slice(0, 200));
+        return new Response(JSON.stringify({ error: `결제 확인 실패 (Polar ${checkoutRes.status}): ${polarErr.slice(0, 100)}` }), {
           status: 402,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         });
       }
       const checkoutData = await checkoutRes.json() as { status?: string };
+      console.log(`consult: checkout.status=${checkoutData.status}`);
       if (checkoutData.status !== 'succeeded' && checkoutData.status !== 'confirmed') {
-        return new Response(JSON.stringify({ error: lang === 'ko' ? '결제가 완료되지 않았습니다.' : 'Payment not completed.' }), {
+        return new Response(JSON.stringify({ error: `결제가 완료되지 않았습니다. (status: ${checkoutData.status})` }), {
           status: 402,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         });
