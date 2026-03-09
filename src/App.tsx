@@ -349,9 +349,9 @@ For refund-related questions, please contact refunds@buzzstyle.work.
       connectionFailed: 'Failed to connect to server.',
     },
     paymentSuccess: {
-      title: 'Payment Successful!',
-      description: 'Thank you for your purchase. You now have access to premium style consulting.',
-      button: 'Start Premium Consulting',
+      title: 'Payment Completed!',
+      description: 'Your payment is complete. Check your style analysis results.',
+      button: 'View Style Analysis',
     },
     auth: {
       login: 'Login',
@@ -742,8 +742,8 @@ StyleAI는 구매 즉시 제공되는 디지털 서비스입니다. AI가 생성
     },
     paymentSuccess: {
       title: '결제가 완료되었습니다!',
-      description: '구매해 주셔서 감사합니다. 이제 프리미엄 스타일 컨설팅을 이용하실 수 있습니다.',
-      button: '프리미엄 컨설팅 시작하기',
+      description: '결제가 완료되었습니다. 스타일 분석을 확인하세요.',
+      button: '스타일 분석 확인하기',
     },
     auth: {
       login: '로그인',
@@ -1469,6 +1469,17 @@ function App() {
       return
     }
     if (params.get('payment') === 'success') {
+      const checkoutId = params.get('checkout_id')
+      if (checkoutId) {
+        const stored = sessionStorage.getItem(pendingConsultKey)
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored)
+            parsed.checkoutId = checkoutId
+            sessionStorage.setItem(pendingConsultKey, JSON.stringify(parsed))
+          } catch { /* ignore */ }
+        }
+      }
       navigateTo('payment-success', true)
     }
     if (params.get('subscription') === 'success') {
@@ -1920,6 +1931,7 @@ function App() {
     heightCm: number
     weightKg: number
     lang: Language
+    checkoutId?: string
   }
 
   const getMetricValues = (heightValue: number, weightValue: number, units: UnitSystem) => {
@@ -1960,6 +1972,7 @@ function App() {
       heightCm,
       weightKg,
       lang: langValue,
+      checkoutId: payload.checkoutId,
     }
   }
 
@@ -1985,21 +1998,28 @@ function App() {
         body: JSON.stringify(normalized),
       })
 
-      const data = await response.json()
+      let data: { report?: string; hairstyleImage?: string | null; error?: string }
+      try {
+        data = await response.json()
+      } catch {
+        alert(t.errors.apiError + `HTTP ${response.status} ${response.statusText}`)
+        return
+      }
 
       if (data.error) {
         alert(t.errors.apiError + data.error)
         return
       }
 
-      setReport(data.report)
+      setReport(data.report ?? '')
       if (data.hairstyleImage) {
         setHairstyleImage(data.hairstyleImage)
       }
       clearPendingConsult()
       navigateTo('result')
-    } catch {
-      alert(t.errors.connectionFailed)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      alert(t.errors.connectionFailed + (msg ? `\n(${msg})` : ''))
     } finally {
       setLoading(false)
     }
@@ -2081,6 +2101,14 @@ function App() {
         clearPendingConsult()
         alert(t.errors.apiError + data.error)
       } else if (data.url) {
+        if (data.id) {
+          const stored = sessionStorage.getItem(pendingConsultKey)
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            parsed.checkoutId = data.id
+            sessionStorage.setItem(pendingConsultKey, JSON.stringify(parsed))
+          }
+        }
         window.location.href = data.url
       } else {
         clearPendingConsult()

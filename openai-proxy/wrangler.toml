@@ -1,6 +1,6 @@
-name = "styleai-pages"
+name = "styleai-openai-proxy"
+main = "index.ts"
 compatibility_date = "2024-10-01"
-pages_build_output_dir = "dist"
 
 [placement]
 mode = "smart"

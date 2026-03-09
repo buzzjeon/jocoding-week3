@@ -5,6 +5,8 @@ interface Env {
   ANTI_BOT_SECRET: string;
   POLAR_ACCESS_TOKEN: string;
   POLAR_ENV?: 'sandbox' | 'production';
+  OPENAI_PROXY_URL?: string;
+  OPENAI_PROXY_SECRET?: string;
 }
 
 const allowedOrigins = [
@@ -18,10 +20,12 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   'http://localhost:4173',
   'http://127.0.0.1:4173',
+  'http://localhost:8788',
+  'http://127.0.0.1:8788',
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') : false;
+  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') || origin.endsWith('.pages.dev') : false;
   if (!origin || (!allowedOrigins.includes(origin) && !isPreview)) {
     return null;
   }
@@ -70,6 +74,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
   }
 
+  const colo = (context.request as any).cf?.colo ?? 'unknown';
+  console.log('consult: start, origin=', origin, 'colo=', colo);
   try {
     const ip = getClientIp(request);
     const limiter = rateLimit(`consult:${ip}`, 6, 60_000);
@@ -202,12 +208,21 @@ Write in a friendly, professional tone.`;
     }
 
     // 스타일 컨설팅 리포트 생성
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const proxyUrl = env.OPENAI_PROXY_URL;
+    const proxySecret = env.OPENAI_PROXY_SECRET;
+    const chatUrl = proxyUrl
+      ? `${proxyUrl}/openai/v1/chat/completions`
+      : 'https://api.openai.com/v1/chat/completions';
+    const chatHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (proxyUrl && proxySecret) {
+      chatHeaders['X-Proxy-Secret'] = proxySecret;
+    } else {
+      chatHeaders['Authorization'] = `Bearer ${env.OPENAI_API_KEY}`;
+    }
+    console.log('Calling OpenAI chat API via', proxyUrl ? 'proxy' : 'direct', 'colo=', colo);
+    const response = await fetch(chatUrl, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+      headers: chatHeaders,
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: messages,
@@ -216,12 +231,26 @@ Write in a friendly, professional tone.`;
       }),
     });
 
-    const data = await response.json();
+    console.log('OpenAI chat response status:', response.status);
+    let data: unknown;
+    try {
+      data = await response.json();
+    } catch {
+      const text = await response.text().catch(() => '(unreadable)');
+      console.error('OpenAI non-JSON response:', response.status, text.slice(0, 300));
+      return new Response(JSON.stringify({
+        error: `OpenAI ${response.status} (non-JSON): ${text.slice(0, 200)}`,
+      }), {
+        status: 502,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
 
     if (!response.ok) {
-      console.error('OpenAI API error:', response.status, JSON.stringify(data));
+      const errMsg = (data as { error?: { message?: string } }).error?.message || JSON.stringify(data);
+      console.error('OpenAI API error:', response.status, errMsg);
       return new Response(JSON.stringify({
-        error: lang === 'ko' ? 'AI 서비스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.' : 'AI service is temporarily unavailable. Please try again later.',
+        error: `OpenAI ${response.status}: ${errMsg}`,
       }), {
         status: 502,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -234,13 +263,10 @@ Write in a friendly, professional tone.`;
     let hairstyleImage = null;
     if (photo) {
       try {
-        // base64 데이터에서 실제 이미지 데이터 추출
+        // base64 데이터에서 실제 이미지 데이터 추출 (CPU 효율적인 방법)
         const base64Data = photo.split(',')[1];
         const binaryData = atob(base64Data);
-        const bytes = new Uint8Array(binaryData.length);
-        for (let i = 0; i < binaryData.length; i++) {
-          bytes[i] = binaryData.charCodeAt(i);
-        }
+        const bytes = Uint8Array.from(binaryData, c => c.charCodeAt(0));
         const imageBlob = new Blob([bytes], { type: 'image/png' });
 
         const formData = new FormData();
@@ -251,11 +277,18 @@ Write in a friendly, professional tone.`;
         formData.append('size', '512x512');
         formData.append('quality', 'low');
 
-        const imageResponse = await fetch('https://api.openai.com/v1/images/edits', {
+        const imageUrl = proxyUrl
+          ? `${proxyUrl}/openai/v1/images/edits`
+          : 'https://api.openai.com/v1/images/edits';
+        const imageHeaders: Record<string, string> = {};
+        if (proxyUrl && proxySecret) {
+          imageHeaders['X-Proxy-Secret'] = proxySecret;
+        } else {
+          imageHeaders['Authorization'] = `Bearer ${env.OPENAI_API_KEY}`;
+        }
+        const imageResponse = await fetch(imageUrl, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
-          },
+          headers: imageHeaders,
           body: formData,
         });
 

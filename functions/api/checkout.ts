@@ -4,6 +4,7 @@ interface Env {
   POLAR_ACCESS_TOKEN: string;
   POLAR_ENV?: 'sandbox' | 'production';
   ANTI_BOT_SECRET: string;
+  SITE_URL?: string;
 }
 
 const allowedOrigins = [
@@ -17,6 +18,8 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   'http://localhost:4173',
   'http://127.0.0.1:4173',
+  'http://localhost:8788',
+  'http://127.0.0.1:8788',
 ];
 
 const getCorsHeaders = (origin: string | null, isSandbox = false) => {
@@ -80,7 +83,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     // Use a query param to avoid SPA 404s on refresh.
-    const successUrl = `${origin}/?payment=success`;
+    // {CHECKOUT_ID} is replaced by Polar with the actual checkout ID.
+    // SITE_URL env var takes priority to ensure the correct domain is used.
+    const baseUrl = env.SITE_URL || origin;
+    const successUrl = `${baseUrl}/?payment=success&checkout_id={CHECKOUT_ID}`;
 
     const sandboxAllowed = origin?.startsWith('http://localhost')
       || origin?.startsWith('http://127.0.0.1')

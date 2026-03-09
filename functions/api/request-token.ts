@@ -18,7 +18,7 @@ const allowedOrigins = [
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') : false;
+  const isPreview = origin ? origin.endsWith('.cloudworkstations.dev') || origin.endsWith('.pages.dev') : false;
   if (!origin || (!allowedOrigins.includes(origin) && !isPreview)) {
     return null;
   }
