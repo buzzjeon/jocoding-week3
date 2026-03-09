@@ -7,6 +7,7 @@ interface Env {
   POLAR_ENV?: 'sandbox' | 'production';
   OPENAI_PROXY_URL?: string;
   OPENAI_PROXY_SECRET?: string;
+  ADMIN_TEST_SECRET?: string;
 }
 
 const allowedOrigins = [
@@ -72,6 +73,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     ? body.lang
     : (headerLang.startsWith('ko') ? 'ko' : 'en');
 
+  // 관리자 테스트 모드: ADMIN_TEST_SECRET이 일치하면 결제 우회
+  const adminSecret = env.ADMIN_TEST_SECRET;
+  const isAdminTest = !!(adminSecret && body?.testSecret && body.testSecret === adminSecret);
+  if (isAdminTest) console.log('consult: admin test mode, skipping payment check');
+
   if (!env.ANTI_BOT_SECRET) {
     return new Response(JSON.stringify({ error: lang === 'ko' ? '보안 설정 오류' : 'Security configuration error' }), {
       status: 500,
@@ -114,7 +120,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     // 결제 완료 서버사이드 검증
-    if (!isPreview) {
+    if (!isPreview && !isAdminTest) {
       if (!checkoutId) {
         return new Response(JSON.stringify({ error: lang === 'ko' ? '결제 정보가 없습니다.' : 'Missing payment information.' }), {
           status: 402,

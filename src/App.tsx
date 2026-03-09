@@ -1468,6 +1468,13 @@ function App() {
       navigateTo(legacyPage, true)
       return
     }
+    // 관리자 테스트 모드: ?testmode=SECRET → sessionStorage에 저장
+    const testmode = params.get('testmode')
+    if (testmode) {
+      sessionStorage.setItem(adminTestKey, testmode)
+      navigateTo('form', true)
+      return
+    }
     if (params.get('payment') === 'success') {
       const checkoutId = params.get('checkout_id')
       if (checkoutId) {
@@ -1922,6 +1929,7 @@ function App() {
   }
 
   const pendingConsultKey = 'pending-consult'
+  const adminTestKey = 'admin-test-secret'
   type ConsultPayload = {
     photo: string | null
     gender: string
@@ -1992,10 +2000,14 @@ function App() {
       if (antiBotToken) {
         headers['X-AntiBot-Token'] = antiBotToken
       }
+      const testSecret = sessionStorage.getItem(adminTestKey)
+      const consultBody = testSecret
+        ? { ...normalized, testSecret }
+        : normalized
       const response = await fetch('/api/consult', {
         method: 'POST',
         headers,
-        body: JSON.stringify(normalized),
+        body: JSON.stringify(consultBody),
       })
 
       let data: { report?: string; hairstyleImage?: string | null; error?: string }
@@ -2097,7 +2109,8 @@ function App() {
       }
 
       const isPreviewHost = window.location.host.endsWith('.cloudworkstations.dev')
-      if (isPreviewHost) {
+      const isAdminTestMode = !!sessionStorage.getItem(adminTestKey)
+      if (isPreviewHost || isAdminTestMode) {
         await generateReport(payload)
         return
       }
