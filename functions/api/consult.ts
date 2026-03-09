@@ -286,19 +286,32 @@ Write in a friendly, professional tone.`;
         } else {
           imageHeaders['Authorization'] = `Bearer ${env.OPENAI_API_KEY}`;
         }
+        const imageAbort = new AbortController();
+        const imageTimeout = setTimeout(() => imageAbort.abort(), 25_000);
         const imageResponse = await fetch(imageUrl, {
           method: 'POST',
           headers: imageHeaders,
           body: formData,
+          signal: imageAbort.signal,
         });
+        clearTimeout(imageTimeout);
 
-        const imageData = await imageResponse.json();
+        let imageData: unknown;
+        try {
+          imageData = await imageResponse.json();
+        } catch {
+          const raw = await imageResponse.text().catch(() => '');
+          console.error('이미지 API non-JSON 응답:', imageResponse.status, raw.slice(0, 200));
+          imageData = null;
+        }
 
-        if (imageResponse.ok && imageData.data?.[0]?.b64_json) {
-          hairstyleImage = `data:image/png;base64,${imageData.data[0].b64_json}`;
+        if (imageResponse.ok && (imageData as any)?.data?.[0]?.b64_json) {
+          hairstyleImage = `data:image/png;base64,${(imageData as any).data[0].b64_json}`;
+        } else if (!imageResponse.ok) {
+          console.error('이미지 API 오류:', imageResponse.status, JSON.stringify(imageData)?.slice(0, 200));
         }
       } catch (imageError) {
-        console.error('헤어스타일 이미지 생성 오류:', imageError);
+        console.error('헤어스타일 이미지 생성 오류:', imageError instanceof Error ? imageError.message : String(imageError));
       }
     }
 
@@ -306,9 +319,10 @@ Write in a friendly, professional tone.`;
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   } catch (error) {
-    console.error('Consult error:', error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Consult error:', errMsg);
     return new Response(JSON.stringify({
-      error: '서버 오류가 발생했습니다.',
+      error: `서버 오류: ${errMsg}`,
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },

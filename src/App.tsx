@@ -2002,7 +2002,8 @@ function App() {
       try {
         data = await response.json()
       } catch {
-        alert(t.errors.apiError + `HTTP ${response.status} ${response.statusText}`)
+        const text = await response.text().catch(() => '(응답 읽기 실패)')
+        alert(t.errors.apiError + `HTTP ${response.status}\n${text.slice(0, 400)}`)
         return
       }
 
